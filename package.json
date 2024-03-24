@@ -1,0 +1,38 @@
+{
+  "name": "loco_backend",
+  "version": "0.1.0",
+  "description": "eliminate redundant code in you backend code base",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test:run": "tsc -w & nodemon dist/test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/AliBasicCoder/loco_backend"
+  },
+  "keywords": [
+    "server",
+    "db",
+    "database"
+  ],
+  "author": "AliBasicCoder",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/busboy": "^1.5.3",
+    "@types/mongodb": "^4.0.7",
+    "@types/uuid": "^9.0.8",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@types/mime-types": "^2.1.4",
+    "@types/node": "^20.11.27",
+    "bcrypt": "^5.1.1",
+    "busboy": "^1.6.0",
+    "case": "^1.6.3",
+    "mime-types": "^2.1.35",
+    "mongodb": "^6.3.0",
+    "uuid": "^9.0.1"
+  }
+}
