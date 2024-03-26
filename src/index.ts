@@ -455,7 +455,25 @@ export async function init(
   });
   result = `function init(${functionArgs}, ENVIRONMENT) { ${result}; ${plugins
     .map((fn) => fn(models))
-    .join(";")}; ${router(models)} }; module.exports = init;`;
+    .join(";")}; ${router(models)} };
+function collectStr(req, MAX_SIZE = 4194304) {
+  return await new Promise((resolve, reject) => {
+    let data = "";
+    let destroyed = false;
+    req.on("data", (chuck) => {
+      if (destroyed) return;
+      if (data.length + chuck.length > MAX_SIZE) {
+        req.destroy();
+        resolve(null);
+      }
+      data += chuck;
+    });
+    req.on("end", () => !destroyed && resolve(data));
+    req.on("error", (err) => !destroyed && reject(err));
+  });
+}
+
+module.exports = init;`;
 
   fs.writeFileSync(path.join(__dirname, "__LOCO_BUILD.js"), result);
 

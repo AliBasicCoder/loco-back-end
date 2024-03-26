@@ -26,15 +26,13 @@ if (
   req.headers["content-type"] === "application/json" &&
   Number(req.headers["content-length"]) > 0
 ) {
-  let str = await new Promise((resolve, reject) => {
-    let data = "";
-    req.on("data", (chuck) => {
-      data += chuck;
-    });
-    req.on("end", () => resolve(data));
-    req.on("error", (err) => reject(err));
-  });
   try {
+    const str = await collectStr(req, this.JSON_MAX_SIZE || 4194304);
+    if (str === null) {
+      res.writeHead(400, { "Content-Type": "text/plain" });
+      res.end("payload exceeded maximum size of " + (this.JSON_MAX_SIZE || 4194304) + " bytes");
+      return;
+    }
     filter = JSON.parse(str);        
   } catch (error) {
     res.writeHead(400, { "Content-Type": "text/plain" });
