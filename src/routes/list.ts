@@ -1,4 +1,4 @@
-import { Model } from ".";
+import { Model } from "..";
 
 // TODO thinks if it's a good idea to take raw filters from request?
 export function list(model: typeof Model) {

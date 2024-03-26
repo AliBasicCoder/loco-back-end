@@ -30,7 +30,7 @@ import {
   trimArray,
   setUpload,
 } from "./util";
-import { list } from "./list";
+import { list } from "./routes/list";
 import { IncomingMessage, ServerResponse } from "node:http";
 
 export class Model {
