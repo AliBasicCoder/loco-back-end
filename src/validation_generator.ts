@@ -66,12 +66,12 @@ if (r_${index} === false) return "'${d2}' rejected by validator";`;
       result += `if (${d} != null) {`;
       if (model.driver.ObjectId) {
         result += `
-if (!(${d} instanceof this._driver.ObjectId || (typeof ${d} === "string" && this._driver.isValidId(${d})))) 
+if (!(${d} instanceof this.driver.ObjectId || (typeof ${d} === "string" && this.driver.isValidId(${d})))) 
   return "'${d2}' is NOT a valid ID";
-if (typeof ${d} === "string" && toObjectId) ${d} = new this._driver.ObjectId(${d});
-if (${d} instanceof this._driver.ObjectId && !toObjectId) ${d} = ${d}.toString();`;
+if (typeof ${d} === "string" && toObjectId) ${d} = new this.driver.ObjectId(${d});
+if (${d} instanceof this.driver.ObjectId && !toObjectId) ${d} = ${d}.toString();`;
       } else {
-        result += `if (typeof ${d} !== "string" || !this._driver.isValidId(${d}))
+        result += `if (typeof ${d} !== "string" || !this.driver.isValidId(${d}))
 return "'${d2}' is NOT a valid ID";`;
       }
       result += `} else ${d} = null;`;
@@ -123,7 +123,7 @@ if (r_${index} === false) return "'${d2}' rejected by validator";`;
     if (sc.default) result += `if (${d} == null) ${d} = ${sc.default};`;
     if (sc.nullable) result += `if (${d} != null) {`;
     result += `if (typeof ${d} === "string") {
-      if (!this._filesystem.isValidId(${d})) return "'${d2}' is not a valid file id";
+      if (!this.filesystem.isValidId(${d})) return "'${d2}' is not a valid file id";
     } else {`;
     if (typeof process === "undefined") {
       result += `if (!(${d} instanceof Blob)) return "'${d2}' is not a Blob nor a file id";`;
@@ -143,12 +143,12 @@ return "'${d2}' is wrong mime type";`;
   if (sc.type === "REF") {
     if (sc.nullable) result += `if (${d} != null) {`;
     if (model.driver.ObjectId) {
-      result += `if (!(${d} instanceof this._driver.ObjectId || (typeof ${d} === "string" && this._driver.isValidId(${d}))))
+      result += `if (!(${d} instanceof this.driver.ObjectId || (typeof ${d} === "string" && this.driver.isValidId(${d}))))
 return "'${d2}' is not a valid reference";
-if (toObjectId && typeof ${d} === "string") ${d} = new this._driver.ObjectId(${d});
+if (toObjectId && typeof ${d} === "string") ${d} = new this.driver.ObjectId(${d});
 if (!toObjectId && typeof ${d} !== "string") ${d} = ${d}.toString();`;
     } else {
-      result += `if (typeof ${d} !== "string" || !this._driver.isValidId(${d}))
+      result += `if (typeof ${d} !== "string" || !this.driver.isValidId(${d}))
 return "'${d2}' is not a valid reference";`;
     }
     if (sc.nullable) result += `} else ${d} = null;`;
