@@ -142,18 +142,18 @@ export class Model {
   }
 
   static rule_delete(
-    fn: (req: http.IncomingMessage) => MaybePromise<boolean>
+    fn?: (req: http.IncomingMessage) => MaybePromise<boolean>
   ): void;
   static rule_delete<J extends typeof Model>(
     collection: J,
     fn?: (user: InstanceType<J>) => MaybePromise<boolean>
   ): void;
   static rule_delete<J extends typeof Model>(
-    collection: J | ((req: http.IncomingMessage) => MaybePromise<boolean>),
+    collection?: J | ((req: http.IncomingMessage) => MaybePromise<boolean>),
     fn?: (user: InstanceType<J>) => MaybePromise<boolean>
   ) {
     this._rules_delete.push(
-      "_new" in collection
+      collection && "_new" in collection
         ? ["delete", collection, fn as (user: Model) => boolean]
         : ["delete", "*", collection]
     );
@@ -186,7 +186,7 @@ export class Model {
   }
 
   static rule_update(
-    fn: (req: http.IncomingMessage) => MaybePromise<boolean>
+    fn?: (req: http.IncomingMessage) => MaybePromise<boolean>
   ): void;
   static rule_update<T extends typeof Model, J extends typeof Model>(
     this: T,
@@ -198,14 +198,14 @@ export class Model {
   ): void;
   static rule_update<T extends typeof Model, J extends typeof Model>(
     this: T,
-    collection: J | ((req: http.IncomingMessage) => MaybePromise<boolean>),
+    collection?: J | ((req: http.IncomingMessage) => MaybePromise<boolean>),
     fn?: (
       user: InstanceType<J>,
       object: InstanceType<T>
     ) => MaybePromise<boolean>
   ) {
     this._rules_update.push(
-      "_new" in collection
+      collection && "_new" in collection
         ? ["update", collection, fn as (user: Model) => boolean]
         : ["update", "*", collection]
     );
