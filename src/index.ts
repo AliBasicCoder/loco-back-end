@@ -32,6 +32,7 @@ import {
 } from "./util";
 import { list } from "./routes/list";
 import { IncomingMessage, ServerResponse } from "node:http";
+import { create } from "./routes/create";
 
 export class Model {
   static DEFAULT_LIMIT = 100;
@@ -123,18 +124,18 @@ export class Model {
   }
 
   static rule_create(
-    fn: (req: http.IncomingMessage) => MaybePromise<boolean>
+    fn?: (req: http.IncomingMessage) => MaybePromise<boolean>
   ): void;
   static rule_create<J extends typeof Model>(
     collection: J,
     fn?: (user: InstanceType<J>) => MaybePromise<boolean>
   ): void;
   static rule_create<J extends typeof Model>(
-    collection: J | ((req: http.IncomingMessage) => MaybePromise<boolean>),
+    collection?: J | ((req: http.IncomingMessage) => MaybePromise<boolean>),
     fn?: (user: InstanceType<J>) => MaybePromise<boolean>
   ) {
     this._rules_create.push(
-      "_new" in collection
+      collection && "_new" in collection
         ? ["create", collection, fn as (user: Model) => boolean]
         : ["create", "*", collection]
     );
@@ -393,7 +394,8 @@ export async function init(
 
     if (!model.driver) model.driver = defaultDriver;
     // @ts-ignore
-    if (!model.filesystem) model.filesystem = defaultFilesystem;
+    if (!model.filesystem && defaultFilesystem)
+      model.filesystem = defaultFilesystem;
     // @ts-ignore
     model._schema = { ...inst };
     model._paths = getPaths(model._schema);
@@ -452,12 +454,12 @@ export async function init(
     // TODO them since the code produced is extremely similar anyway
     if (model._rules_list.length >= 1)
       result += `${model._functionName}._list = ${list(model)};`;
+    if (model._rules_create.length >= 1)
+      result += `${model._functionName}._create = ${create(model)};`;
   });
-  result = `function init(${functionArgs}, ENVIRONMENT) { ${result}; ${plugins
-    .map((fn) => fn(models))
-    .join(";")}; ${router(models)} };
+  result = `
 function collectStr(req, MAX_SIZE = 4194304) {
-  return await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     let data = "";
     let destroyed = false;
     req.on("data", (chuck) => {
@@ -472,6 +474,10 @@ function collectStr(req, MAX_SIZE = 4194304) {
     req.on("error", (err) => !destroyed && reject(err));
   });
 }
+const busboy = require("busboy");  
+function init(${functionArgs}, ENVIRONMENT) { ${result}; ${plugins
+    .map((fn) => fn(models))
+    .join(";")}; ${router(models)} };
 
 module.exports = init;`;
 
@@ -509,6 +515,11 @@ export function httpRouter(
         inside += `
   if (pathname === "/${model.collection}/list" && req.method === "GET") {
     return ${model._functionName}._list(req, res);  
+  }`;
+      if (model._rules_create.length > 0)
+        inside += `
+  if (pathname === "/${model.collection}/create" && req.method === "POST") {
+    return ${model._functionName}._create(req, res);  
   }`;
     });
     inside += `
