@@ -139,12 +139,12 @@ if (!authorize_result) {
   }
 
   result += `this.preCreate(upload);
-this.preUpdate(upload, null);
+this.preUpdate(upload);
 const result = await this.driver.create(this.collection, upload);
-this.postCreate(upload);
-this.postUpdate(upload);
+this.postCreate(result);
+this.postUpdate(result);
 res.writeHead(200, { "Content-Type": "application/json" });
-res.end(JSON.stringify(upload));
+res.end(JSON.stringify(result));
 }`;
 
   return result;

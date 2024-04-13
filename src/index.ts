@@ -35,6 +35,7 @@ import { list } from "./routes/list";
 import { IncomingMessage, ServerResponse } from "node:http";
 import { create } from "./routes/create";
 import { del } from "./routes/delete";
+import { replace } from "./routes/replace";
 
 export class Model {
   static DEFAULT_LIMIT = 100;
@@ -357,8 +358,8 @@ export class Model {
 
   static preUpdate<T extends typeof Model>(
     this: T,
-    newObject: noFn<InstanceType<T>>,
-    oldObject: noFn<InstanceType<T>> | null
+    newObject: noFn<InstanceType<T>>
+    // oldObject: noFn<InstanceType<T>> | null
   ) {}
   static postUpdate<T extends typeof Model>(
     this: T,
@@ -475,6 +476,8 @@ export async function init(
       result += `${model._functionName}._create = ${create(model)};`;
     if (model._rules_delete.length >= 1)
       result += `${model._functionName}._delete = ${del(model)};`;
+    if (model._rules_update.length >= 1)
+      result += `${model._functionName}._replace = ${replace(model)};`;
   });
   result = `
 function collectStr(req, MAX_SIZE = 4194304) {
@@ -554,6 +557,18 @@ export function httpRouter(
     const ids = st.split("/");
     return ${model._functionName}._delete(req, res, ids);
   }`;
+      if (model._rules_update.length > 0)
+        inside += `if (pathname.startsWith("/${
+          model.collection
+        }/replace") && req.method === "PUT") {
+  const st = pathname.slice(${model.collection.length + 9});
+  if (st == "" || st.contains("/")) {
+    res.writeHead(404, { "Content-Type": "text/plain" });
+    res.end("Cannot " + req.method + " " + pathname);    
+    return;
+  }
+  ${model._functionName}._replace(req, res, st);
+}`;
     });
     inside += `
   res.writeHead(404, { "Content-Type": "text/plain" });

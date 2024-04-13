@@ -38,6 +38,7 @@ class Some2 extends Model {
 Some2.rule_list();
 Some.rule_create();
 Some2.rule_delete(Some);
+Some.rule_update();
 
 init(
   [Some2, Some],
