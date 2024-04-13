@@ -304,6 +304,7 @@ export type UpdateRule =
       ((user: Model, object: Model) => MaybePromise<boolean>)?
     ];
 
+// TODO consider adding delete_filter rule
 export type DeleteRule =
   | ["delete", "*", ((req: http.IncomingMessage) => MaybePromise<boolean>)?]
   | ["delete", typeof Model, ((user: Model) => MaybePromise<boolean>)?];

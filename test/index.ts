@@ -37,6 +37,7 @@ class Some2 extends Model {
 }
 Some2.rule_list();
 Some.rule_create();
+Some2.rule_delete(Some);
 
 init(
   [Some2, Some],
@@ -44,5 +45,3 @@ init(
   new MongoDBDriver("mongodb://localhost:27017", "server-db-test"),
   new FsFilesystem(path.join(__dirname, "files"))
 );
-
-console.log(Some.filesystem);

@@ -1,3 +1,4 @@
+// TODO consider supporting Deno
 import path from "path";
 import fs from "fs";
 import type http from "node:http";
@@ -33,17 +34,18 @@ import {
 import { list } from "./routes/list";
 import { IncomingMessage, ServerResponse } from "node:http";
 import { create } from "./routes/create";
+import { del } from "./routes/delete";
 
 export class Model {
   static DEFAULT_LIMIT = 100;
   static MAX_LIMIT: number | null = 1000;
   static collection: string;
   static _functionName: string;
-  static _rules: Rule[] = [];
-  static _rules_list: (ListRule | ListFilterRule)[] = [];
-  static _rules_create: CreateRule[] = [];
-  static _rules_update: UpdateRule[] = [];
-  static _rules_delete: DeleteRule[] = [];
+  static _rules: Rule[];
+  static _rules_list: (ListRule | ListFilterRule)[];
+  static _rules_create: CreateRule[];
+  static _rules_update: UpdateRule[];
+  static _rules_delete: DeleteRule[];
   static _customRoutes: {
     [key: string]: CustomRouteItem;
   };
@@ -116,6 +118,8 @@ export class Model {
     collection?: J | ((req: http.IncomingMessage) => MaybePromise<boolean>),
     fn?: (user: InstanceType<J>) => MaybePromise<boolean>
   ) {
+    if (!this._rules_list) this._rules_list = [];
+
     this._rules_list.push(
       collection && "_new" in collection
         ? ["list", collection, fn as (user: Model) => boolean]
@@ -134,6 +138,8 @@ export class Model {
     collection?: J | ((req: http.IncomingMessage) => MaybePromise<boolean>),
     fn?: (user: InstanceType<J>) => MaybePromise<boolean>
   ) {
+    if (!this._rules_create) this._rules_create = [];
+
     this._rules_create.push(
       collection && "_new" in collection
         ? ["create", collection, fn as (user: Model) => boolean]
@@ -152,6 +158,8 @@ export class Model {
     collection?: J | ((req: http.IncomingMessage) => MaybePromise<boolean>),
     fn?: (user: InstanceType<J>) => MaybePromise<boolean>
   ) {
+    if (!this._rules_delete) this._rules_delete = [];
+
     this._rules_delete.push(
       collection && "_new" in collection
         ? ["delete", collection, fn as (user: Model) => boolean]
@@ -178,6 +186,8 @@ export class Model {
       user: InstanceType<J>
     ) => MaybePromise<ToFilter<noFn<InstanceType<J>>>>
   ) {
+    if (!this._rules_list) this._rules_list = [];
+
     this._rules_list.push(
       "_new" in collection
         ? ["list_filter", collection, fn as (user: Model) => any]
@@ -204,6 +214,8 @@ export class Model {
       object: InstanceType<T>
     ) => MaybePromise<boolean>
   ) {
+    if (!this._rules_update) this._rules_update = [];
+
     this._rules_update.push(
       collection && "_new" in collection
         ? ["update", collection, fn as (user: Model) => boolean]
@@ -399,6 +411,11 @@ export async function init(
     // @ts-ignore
     model._schema = { ...inst };
     model._paths = getPaths(model._schema);
+    if (!model._rules_list) model._rules_list = [];
+    if (!model._rules_delete) model._rules_delete = [];
+    if (!model._rules_update) model._rules_update = [];
+    if (!model._rules_create) model._rules_create = [];
+
     model._rules = [
       ...model._rules_create,
       ...model._rules_list,
@@ -456,6 +473,8 @@ export async function init(
       result += `${model._functionName}._list = ${list(model)};`;
     if (model._rules_create.length >= 1)
       result += `${model._functionName}._create = ${create(model)};`;
+    if (model._rules_delete.length >= 1)
+      result += `${model._functionName}._delete = ${del(model)};`;
   });
   result = `
 function collectStr(req, MAX_SIZE = 4194304) {
@@ -520,6 +539,20 @@ export function httpRouter(
         inside += `
   if (pathname === "/${model.collection}/create" && req.method === "POST") {
     return ${model._functionName}._create(req, res);  
+  }`;
+      if (model._rules_delete.length > 0)
+        inside += ` 
+  if (pathname.startsWith("/${
+    model.collection
+  }/delete") && req.method === "DELETE") {
+    const st = pathname.slice(${model.collection.length + 8});
+    if (st == "" || st.contains("/")) {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("Cannot " + req.method + " " + pathname);    
+      return;
+    }
+    const ids = st.split("/");
+    return ${model._functionName}._delete(req, res, ids);
   }`;
     });
     inside += `
