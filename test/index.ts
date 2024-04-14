@@ -1,5 +1,13 @@
 import path from "path";
-import { Model, expressRouter, httpRouter, init } from "../src";
+import {
+  GET,
+  Model,
+  allow,
+  expressRouter,
+  httpRouter,
+  init,
+  returns,
+} from "../src";
 import { FsFilesystem } from "../src/dir_filesystem_driver";
 import { MongoDBDriver } from "../src/mongodb_driver";
 import {
@@ -35,7 +43,15 @@ class Some2 extends Model {
   h1 = string();
   h2 = array(string());
   h3 = object({ h4: array(object({ h5: string() })) });
+
+  @allow(Some)
+  @returns(string())
+  @GET(string(), number())
+  static editFile(user: Some, name: string, age: number, ctx: any) {
+    console.log(name, age, ctx);
+  }
 }
+
 Some2.rule_list();
 Some.rule_create();
 Some2.rule_delete(Some);

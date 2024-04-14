@@ -1,5 +1,5 @@
 import { Model } from ".";
-import { AnyType, SchemaObject } from "./types";
+import { AnyType, CustomRouteItem, SchemaObject } from "./types";
 
 function join(
   key: string,
@@ -221,6 +221,26 @@ export function schemaValidateGen(model: typeof Model) {
   let result = "function (object, toObjectId) {";
   for (const [key, sc] of Object.entries(schema)) {
     result += validateGen(sc, key, key, "object", "this._schema", model);
+  }
+  return result + "}";
+}
+
+export function customRouteValidateGen(
+  key: string,
+  route: CustomRouteItem,
+  model: typeof Model
+) {
+  let result = "function (object, toObjectId) {";
+
+  for (const [key, sc] of Object.entries(route.schema)) {
+    result += validateGen(
+      sc,
+      key,
+      key,
+      "object",
+      `this._customRoutes[${key}]`,
+      model
+    );
   }
   return result + "}";
 }

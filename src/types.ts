@@ -313,11 +313,12 @@ export type Rule =
   | DeleteRule;
 
 export type CustomRouteItem = {
-  schema: AnyType[];
-  method: "get" | "post" | "put";
+  schema: SchemaObject;
+  types: AnyType[];
+  method: "get" | "post" | "put" | "delete";
   isStatic: boolean;
-  authorization: string[];
-  returnType: AnyType | string | null;
+  authorization: (typeof Model)[];
+  returnType: AnyType | null;
   argumentsName: string[];
 };
 
@@ -361,7 +362,8 @@ export type Redirect = {
 
 export const getMetadata = (
   o: any
-): [CustomError | undefined, Redirect | undefined] => [o[ERROR], o[REDIRECT]];
+): [CustomError | undefined, Redirect | undefined] =>
+  typeof o === "object" ? [o[ERROR], o[REDIRECT]] : [null, null];
 
 export const error = (status: number, reason: any) => ({
   [ERROR]: { status, reason },

@@ -18,6 +18,7 @@ import {
   SchemaObject,
   ToFilter,
   UpdateRule,
+  getMetadata,
   noFn,
 } from "./types";
 import { STATE } from "./schema";
@@ -30,12 +31,14 @@ import {
   removeProperties,
   trimArray,
   setUpload,
+  $args,
 } from "./util";
 import { list } from "./routes/list";
 import { IncomingMessage, ServerResponse } from "node:http";
 import { create } from "./routes/create";
 import { del } from "./routes/delete";
 import { replace } from "./routes/replace";
+import { customRoutes } from "./routes/customRoutes";
 
 export class Model {
   static DEFAULT_LIMIT = 100;
@@ -380,7 +383,7 @@ export type ErrorHandler = (
   error: any
 ) => void;
 
-const INIT_ENVIRONMENT = {};
+const INIT_ENVIRONMENT = { getMetadata };
 
 export function setEnvironment(o: any) {
   Object.assign(INIT_ENVIRONMENT, o);
@@ -479,6 +482,10 @@ export async function init(
       result += `${model._functionName}._delete = ${del(model)};`;
     if (model._rules_update.length >= 1)
       result += `${model._functionName}._replace = ${replace(model)};`;
+
+    if (!model._customRoutes) model._customRoutes = {};
+
+    result += customRoutes(model);
   });
   result = `
 function collectStr(req, MAX_SIZE = 4194304) {
@@ -498,9 +505,11 @@ function collectStr(req, MAX_SIZE = 4194304) {
   });
 }
 const busboy = require("busboy");  
-function init(${functionArgs}, ENVIRONMENT) { ${result}; ${plugins
-    .map((fn) => fn(models))
-    .join(";")}; ${router(models)} };`;
+function init(${functionArgs}, ENVIRONMENT) { 
+  const { getMetadata } = ENVIRONMENT;
+  ${result};
+  ${plugins.map((fn) => fn(models)).join(";")}; ${router(models)}
+};`;
 
   let init_result;
   if (useEval) {
@@ -524,16 +533,52 @@ function init(${functionArgs}, ENVIRONMENT) { ${result}; ${plugins
 }
 
 const defaultErrorHandler: ErrorHandler = (req, res, error) => {
+  console.error(error);
   res.writeHead(500, { "Content-Type": "text/plain" });
   res.end("Internal Server Error");
-  console.error(error);
 };
+
+function handleErrorCreator(errorHandler: ErrorHandler) {
+  return (fn: Function) => {
+    return (req: IncomingMessage, res: ServerResponse, ...args: any[]) => {
+      try {
+        const result = fn(req, res, ...args);
+        if (result instanceof Promise) {
+          return result.catch((error) => {
+            try {
+              errorHandler(req, res, error);
+            } catch (error2) {
+              console.log(
+                "\nTried to handle error but error handler errored! Original Error: \n"
+              );
+              console.error(error);
+              console.log("\nError handler error: \n");
+              console.error(error2);
+            }
+          });
+        }
+        return result;
+      } catch (error) {
+        try {
+          errorHandler(req, res, error);
+        } catch (error2) {
+          console.log(
+            "\nTried to handle error but error handler errored! Original Error: \n"
+          );
+          console.error(error);
+          console.log("\nError handler error: \n");
+          console.error(error2);
+        }
+      }
+    };
+  };
+}
 
 export function httpRouter(
   port?: number,
   errorHandler: ErrorHandler = defaultErrorHandler
 ) {
-  setEnvironment({ errorHandler, PORT: port });
+  setEnvironment({ handleError: handleErrorCreator(errorHandler), PORT: port });
 
   return (models: (typeof Model)[]) => {
     let inside = "";
@@ -581,21 +626,7 @@ export function httpRouter(
   res.end("Cannot " + req.method + " " + pathname);    
   return`;
     result += `
-function handleError(fn, errorHandler = ENVIRONMENT.errorHandler) {
-  return (req, res, ...args) => {
-    try {
-      const result = fn(req, res, ...args);
-      if (result instanceof Promise) {
-        return result.catch((error) => {
-          errorHandler(req, res, error);
-        });
-      }
-      return result;
-    } catch (error) {
-      errorHandler(req, res, error);
-    }
-  };
-}
+const { handleError } = ENVIRONMENT; 
 const http = require("http");
 const server = http.createServer(handleError(
   (req, res) => {
@@ -617,25 +648,11 @@ export function expressRouter(
   port?: number,
   errorHandler: ErrorHandler = defaultErrorHandler
 ) {
-  setEnvironment({ errorHandler, PORT: port });
+  setEnvironment({ handleError: handleErrorCreator(errorHandler), PORT: port });
 
   return (models: (typeof Model)[]) => {
     let result = `
-function handleError(fn, errorHandler = ENVIRONMENT.errorHandler) {
-  return (req, res, ...args) => {
-    try {
-      const result = fn(req, res, ...args);
-      if (result instanceof Promise) {
-        return result.catch((error) => {
-          errorHandler(req, res, error);
-        });
-      }
-      return result;
-    } catch (error) {
-      errorHandler(req, res, error);
-    }
-  };
-}
+const { handleError } = ENVIRONMENT; 
 const express = require("express");
 const router = express.Router();
 `;
@@ -649,9 +666,79 @@ const router = express.Router();
         result += `router.delete("/${model.collection}/delete/:ids", handleError((req, res) => ${model._functionName}._delete(req, res, req.params.ids)));`;
       if (model._rules_update.length > 0)
         result += `router.put("/${model.collection}/replace/:id", handleError((req, res) => ${model._functionName}._replace(req, res, req.params.id)));`;
+      for (const [key, route] of Object.entries(model._customRoutes)) {
+        result += `router.${route.method}("/${model.collection}/${key}${
+          !route.isStatic ? "/:id" : ""
+        }", handleError((req, res) => ${model._functionName}._${key}(req, res${
+          !route.isStatic ? ", id" : ""
+        })));`;
+      }
     });
 
     result += `return router;`;
     return result;
+  };
+}
+
+function customRouteCreator(method: "delete" | "get" | "put" | "post") {
+  return (...args: any[]) => {
+    return (o: any, propertyName: string) => {
+      const model = (o.prototype ? o : o.constructor) as typeof Model;
+      const argumentsName = $args(o[propertyName]);
+      if (argumentsName[argumentsName.length - 1] === "ctx") {
+        argumentsName.pop();
+      }
+      const schema = {} as any;
+      for (let i = 0; i < args.length; i++) {
+        schema[argumentsName[i]] = args[i];
+      }
+      if (!model._customRoutes) model._customRoutes = {};
+      model._customRoutes[propertyName] = {
+        argumentsName,
+        authorization: [],
+        isStatic: !!o.prototype,
+        method,
+        returnType: null,
+        schema,
+        types: args,
+      };
+    };
+  };
+}
+
+export const GET = customRouteCreator("get");
+export const POST = customRouteCreator("post");
+export const PUT = customRouteCreator("put");
+export const DEL = customRouteCreator("delete");
+
+export function returns(type: any) {
+  return (o: any, propertyName: string) => {
+    const model = (o.prototype ? o : o.constructor) as typeof Model;
+    if (!model._customRoutes) model._customRoutes = {};
+
+    model._customRoutes[propertyName].returnType = type;
+  };
+}
+
+export function allow(...args: (typeof Model)[]) {
+  return (o: any, propertyName: string) => {
+    const model = (o.prototype ? o : o.constructor) as typeof Model;
+    if (!model._customRoutes) model._customRoutes = {};
+
+    model._customRoutes[propertyName].authorization = args;
+    model._customRoutes[propertyName].argumentsName =
+      model._customRoutes[propertyName].argumentsName.slice(1);
+    if (
+      model._customRoutes[propertyName].argumentsName.length !==
+      model._customRoutes[propertyName].types.length
+    ) {
+      throw new Error("arguments should be the same as types");
+    }
+    const schema = {} as any;
+    for (let i = 0; i < model._customRoutes[propertyName].types.length; i++) {
+      schema[model._customRoutes[propertyName].argumentsName[i]] =
+        model._customRoutes[propertyName].types[i];
+    }
+    model._customRoutes[propertyName].schema = schema;
   };
 }
