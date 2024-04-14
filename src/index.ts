@@ -2,6 +2,7 @@
 import path from "path";
 import fs from "fs";
 import type http from "node:http";
+import cookie from "cookie";
 import {
   AuthorizeFunction,
   BasicType,
@@ -740,5 +741,42 @@ export function allow(...args: (typeof Model)[]) {
         model._customRoutes[propertyName].types[i];
     }
     model._customRoutes[propertyName].schema = schema;
+  };
+}
+
+export function sessionAuth(
+  collection: typeof Model,
+  sessionCollection: typeof Model,
+  antiCSRF = true
+): AuthorizeFunction {
+  return async (req, returnUser) => {
+    if (!req.headers.cookie) {
+      return false;
+    }
+    const cookies = (
+      (req as any).cookies
+        ? (req as any).cookies
+        : cookie.parse(req.headers.cookie)
+    ) as Record<string, string>;
+    const id = cookies.SessionID;
+    if (!id) return false;
+    if (!sessionCollection.driver.isValidId(id)) return false;
+    const session = await sessionCollection.findById(id);
+    if (
+      !session ||
+      (antiCSRF && (session as any).anti_csrf !== req.headers.anti_csrf)
+    )
+      return false;
+
+    if (returnUser) {
+      const user = await collection.findById((session as any).user);
+      // TODO should session be removed?
+      if (!user) return false;
+      user._id = user._id.toString();
+
+      return collection._new(user);
+    }
+
+    return true;
   };
 }
