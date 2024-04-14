@@ -391,7 +391,8 @@ export async function init(
   router: Router,
   defaultDriver: DBDriver,
   defaultFilesystem?: FileSystem,
-  plugins: LocoPlugin[] = []
+  plugins: LocoPlugin[] = [],
+  useEval = false
 ) {
   let functionArgs = "";
   let result = "";
@@ -499,13 +500,18 @@ function collectStr(req, MAX_SIZE = 4194304) {
 const busboy = require("busboy");  
 function init(${functionArgs}, ENVIRONMENT) { ${result}; ${plugins
     .map((fn) => fn(models))
-    .join(";")}; ${router(models)} };
+    .join(";")}; ${router(models)} };`;
 
-module.exports = init;`;
+  let init_result;
+  if (useEval) {
+    result += "init";
+    init_result = eval(result);
+  } else {
+    result += "module.exports = init;";
+    fs.writeFileSync(path.join(__dirname, "__LOCO_BUILD.js"), result);
+    init_result = require("./__LOCO_BUILD.js")(...models, INIT_ENVIRONMENT);
+  }
 
-  fs.writeFileSync(path.join(__dirname, "__LOCO_BUILD.js"), result);
-
-  const init_result = require("./__LOCO_BUILD.js")(...models, INIT_ENVIRONMENT);
   const promises = [] as Promise<void>[];
   models.forEach((model) => {
     if (!model.driver.initialized) promises.push(model.driver.init(models));
