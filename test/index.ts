@@ -1,5 +1,5 @@
 import path from "path";
-import { Model, httpRouter, init } from "../src";
+import { Model, expressRouter, httpRouter, init } from "../src";
 import { FsFilesystem } from "../src/dir_filesystem_driver";
 import { MongoDBDriver } from "../src/mongodb_driver";
 import {
@@ -14,6 +14,7 @@ import {
   tuple,
 } from "../src/schema";
 import { AuthorizeFunction } from "../src/types";
+import express, { Router } from "express";
 
 function validateSome(s: string) {
   console.log("hi");
@@ -40,9 +41,18 @@ Some.rule_create();
 Some2.rule_delete(Some);
 Some.rule_update();
 
-init(
-  [Some2, Some],
-  httpRouter(4321),
-  new MongoDBDriver("mongodb://localhost:27017", "server-db-test"),
-  new FsFilesystem(path.join(__dirname, "files"))
-);
+async function main() {
+  const router = (await init(
+    [Some2, Some],
+    expressRouter(4321),
+    new MongoDBDriver("mongodb://localhost:27017", "server-db-test"),
+    new FsFilesystem(path.join(__dirname, "files"))
+  )) as Router;
+
+  const app = express();
+  app.use(router);
+
+  app.listen(4321, () => console.log("Started on port 4321"));
+}
+
+main();

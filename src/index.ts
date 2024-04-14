@@ -575,7 +575,7 @@ export function httpRouter(
   res.end("Cannot " + req.method + " " + pathname);    
   return`;
     result += `
-function handleError(fn, errorHandler) {
+function handleError(fn, errorHandler = ENVIRONMENT.errorHandler) {
   return (req, res, ...args) => {
     try {
       const result = fn(req, res, ...args);
@@ -597,13 +597,55 @@ const server = http.createServer(handleError(
     const pathname = url.pathname;
     req.query = url.query;
     ${inside}
-  },
-  ENVIRONMENT.errorHandler
+  }
 ));`;
     if (port)
       result += `server.listen(ENVIRONMENT.PORT, () => console.log("Started on port: " + ENVIRONMENT.PORT));`;
     result += "return server;";
 
+    return result;
+  };
+}
+
+export function expressRouter(
+  port?: number,
+  errorHandler: ErrorHandler = defaultErrorHandler
+) {
+  setEnvironment({ errorHandler, PORT: port });
+
+  return (models: (typeof Model)[]) => {
+    let result = `
+function handleError(fn, errorHandler = ENVIRONMENT.errorHandler) {
+  return (req, res, ...args) => {
+    try {
+      const result = fn(req, res, ...args);
+      if (result instanceof Promise) {
+        return result.catch((error) => {
+          errorHandler(req, res, error);
+        });
+      }
+      return result;
+    } catch (error) {
+      errorHandler(req, res, error);
+    }
+  };
+}
+const express = require("express");
+const router = express.Router();
+`;
+
+    models.forEach((model) => {
+      if (model._rules_list.length > 0)
+        result += `router.get("/${model.collection}/list", handleError((req, res) => ${model._functionName}._list(req, res)));`;
+      if (model._rules_create.length > 0)
+        result += `router.post("/${model.collection}/create", handleError((req, res) => ${model._functionName}._create(req, res)));`;
+      if (model._rules_delete.length > 0)
+        result += `router.delete("/${model.collection}/delete/:ids", handleError((req, res) => ${model._functionName}._delete(req, res, req.params.ids)));`;
+      if (model._rules_update.length > 0)
+        result += `router.put("/${model.collection}/replace/:id", handleError((req, res) => ${model._functionName}._replace(req, res, req.params.id)));`;
+    });
+
+    result += `return router;`;
     return result;
   };
 }
