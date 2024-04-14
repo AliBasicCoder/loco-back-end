@@ -23,6 +23,7 @@ import {
 } from "../src/schema";
 import { AuthorizeFunction } from "../src/types";
 import express, { Router } from "express";
+import { webCollectionsCreator } from "../src/client_generator";
 
 function validateSome(s: string) {
   console.log("hi");
@@ -69,6 +70,8 @@ async function main() {
   app.use(router);
 
   app.listen(4321, () => console.log("Started on port 4321"));
+
+  webCollectionsCreator("/home/aliahmed/web/loco/client", [Some, Some2]);
 }
 
 main();
