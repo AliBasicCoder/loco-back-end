@@ -1,7 +1,9 @@
 // TODO consider supporting Deno
 import fs from "fs";
 import type http from "node:http";
-import cookie from "cookie";
+import bcrypt from "bcrypt";
+import { v4 as uuid_v4 } from "uuid";
+import cookie, { CookieSerializeOptions } from "cookie";
 import {
   AuthorizeFunction,
   BasicType,
@@ -18,6 +20,7 @@ import {
   SchemaObject,
   ToFilter,
   UpdateRule,
+  error,
   getMetadata,
   noFn,
 } from "./types";
@@ -795,8 +798,8 @@ export function sessionAuth(
     ) as Record<string, string>;
     const id = cookies.SessionID;
     if (!id) return false;
-    if (!sessionCollection.driver.isValidId(id)) return false;
-    const session = await sessionCollection.findById(id);
+    // @ts-ignore
+    const session = await sessionCollection.findOne({ id });
     if (
       !session ||
       (antiCSRF && (session as any).anti_csrf !== req.headers.anti_csrf)
@@ -813,5 +816,75 @@ export function sessionAuth(
     }
 
     return true;
+  };
+}
+
+interface EPSoptions {
+  emailProperty: string;
+  passwordProperty: string;
+  extraSessionData: (req: IncomingMessage, user: any) => any;
+  cookieOptions: CookieSerializeOptions;
+}
+
+const defaultEPSoptions: EPSoptions = {
+  emailProperty: "email",
+  passwordProperty: "password",
+  extraSessionData: () => ({}),
+  cookieOptions: {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+  },
+};
+
+export function emailPasswordSessionLogin(
+  collection: typeof Model,
+  sessionCollection: typeof Model,
+  options: Partial<EPSoptions> = {}
+): Function {
+  const op = { ...defaultEPSoptions, ...options };
+
+  if (!collection._customRoutes) collection._customRoutes = {};
+
+  collection._customRoutes.login = {
+    types: [{ type: "STRING" }, { type: "STRING" }],
+    schema: { email: { type: "STRING" }, password: { type: "STRING" } },
+    isStatic: true,
+    method: "post",
+    returnType: { type: "REF", to: sessionCollection },
+    argumentsName: ["email", "password"],
+    authorization: [],
+  };
+
+  return async (
+    email: string,
+    password: string,
+    ctx: { req: IncomingMessage; res: ServerResponse }
+  ) => {
+    const user = await collection.findOne({ [op.emailProperty]: email });
+    if (
+      !user ||
+      !(await bcrypt.compare(password, (user as any)[op.passwordProperty]))
+    ) {
+      return error(400, "incorrect email or password");
+    }
+    const session = await sessionCollection.driver.create(
+      sessionCollection.collection,
+      {
+        id: uuid_v4(),
+        user: user._id.toString(),
+        ip_address: (ctx.req.headers["x-forwarded-for"] ||
+          ctx.req.socket.remoteAddress) as string,
+        createAt: new Date(),
+        updateAt: new Date(),
+        ...op.extraSessionData(ctx.req, user),
+      }
+    );
+    ctx.res.setHeader(
+      "cookie",
+      cookie.serialize("SessionID", session.id, op.cookieOptions)
+    );
+
+    return session;
   };
 }
