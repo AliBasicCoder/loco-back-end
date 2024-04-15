@@ -2,8 +2,8 @@
   "name": "loco_backend",
   "version": "0.1.0",
   "description": "eliminate redundant code in you backend code base",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "scripts": {
     "test:run": "tsc -w & nodemon dist/test"
   },

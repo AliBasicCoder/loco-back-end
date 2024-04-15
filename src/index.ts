@@ -40,6 +40,8 @@ import { create } from "./routes/create";
 import { del } from "./routes/delete";
 import { replace } from "./routes/replace";
 import { customRoutes } from "./routes/customRoutes";
+export * from "./types";
+export * from "./schema";
 
 export class Model {
   static DEFAULT_LIMIT = 100;
