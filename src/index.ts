@@ -74,6 +74,8 @@ export class Model {
   static _new<T extends typeof Model>(this: T, object: any) {
     const o = new this();
     Object.assign(o, object);
+    // TODO make function to convert all ObjectIds to strings
+    o._id = o._id.toString();
     return o as InstanceType<T>;
   }
   static _removeNoSend(object: any) {
@@ -644,7 +646,7 @@ export function httpRouter(
       res.end("Cannot " + req.method + " " + pathname);    
       return;
     }
-    const ids = st.split("/");
+    const ids = st.split(",");
     return ${model._functionName}._delete(req, res, ids);
   }`;
       if (model._rules_update.length > 0)
@@ -702,7 +704,7 @@ const router = express.Router();
       if (model._rules_create.length > 0)
         result += `router.post("/${model.collection}/create", handleError((req, res) => ${model._functionName}._create(req, res)));`;
       if (model._rules_delete.length > 0)
-        result += `router.delete("/${model.collection}/delete/:ids", handleError((req, res) => ${model._functionName}._delete(req, res, req.params.ids)));`;
+        result += `router.delete("/${model.collection}/delete/:ids", handleError((req, res) => ${model._functionName}._delete(req, res, req.params.ids.split(","))));`;
       if (model._rules_update.length > 0)
         result += `router.put("/${model.collection}/replace/:id", handleError((req, res) => ${model._functionName}._replace(req, res, req.params.id)));`;
       for (const [key, route] of Object.entries(model._customRoutes)) {
@@ -810,7 +812,6 @@ export function sessionAuth(
       const user = await collection.findById((session as any).user);
       // TODO should session be removed?
       if (!user) return false;
-      user._id = user._id.toString();
 
       return collection._new(user);
     }
