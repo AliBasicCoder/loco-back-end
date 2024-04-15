@@ -20,12 +20,27 @@ for (const id of ids) {
         collection._functionName
       }.authorize(req, ${!!fn});`;
       if (fn) {
-        result += `if (authorize_result) {
-const authorize_result2 = await this._rules_delete[${i}][2](authorize_result);
+        if (rule[3]) {
+          result += `if (authorize_result) {
+            const __documents = await ${model._functionName}.findByIds(ids);
+            const __user = ${collection._functionName}._new(authorize_result);
+            let __allAuthorized = true;
+            for (const __document of __documents) {
+              if (!(await this._rules_delete[${i}][2](__user, __document))) {
+                __allAuthorized = false;
+                break;
+              }
+            }
+            authorized = __allAuthorized;
+          }`;
+        } else {
+          result += `if (authorize_result) {
+const authorize_result2 = await this._rules_delete[${i}][2](${collection._functionName}._new(authorize_result));
 if (authorize_result2) {
   authorized = true;
 }
 }`;
+        }
       } else result += `if (authorize_result) authorized = true;`;
       if (i !== 0) result += "}";
     });

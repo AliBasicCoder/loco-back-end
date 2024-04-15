@@ -298,12 +298,24 @@ export type CreateRule =
 
 export type UpdateRule =
   | ["update", "*", ((req: http.IncomingMessage) => MaybePromise<boolean>)?]
-  | ["update", typeof Model, ((user: Model) => MaybePromise<boolean>)?];
+  | [
+      "update",
+      typeof Model,
+      ((user: Model, document: Model) => MaybePromise<boolean>)?,
+      // wether to fetch the document or not
+      boolean?
+    ];
 
 // TODO consider adding delete_filter rule
 export type DeleteRule =
   | ["delete", "*", ((req: http.IncomingMessage) => MaybePromise<boolean>)?]
-  | ["delete", typeof Model, ((user: Model) => MaybePromise<boolean>)?];
+  | [
+      "delete",
+      typeof Model,
+      ((user: Model, document: Model) => MaybePromise<boolean>)?,
+      // wether to fetch the document or not
+      boolean?
+    ];
 
 export type Rule =
   | ListRule

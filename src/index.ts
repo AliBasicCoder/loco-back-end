@@ -42,6 +42,8 @@ import { replace } from "./routes/replace";
 import { customRoutes } from "./routes/customRoutes";
 export * from "./types";
 export * from "./schema";
+export * from "./mongodb_driver";
+export * from "./client_generator";
 
 export class Model {
   static DEFAULT_LIMIT = 100;
@@ -161,15 +163,30 @@ export class Model {
     collection: J,
     fn?: (user: InstanceType<J>) => MaybePromise<boolean>
   ): void;
-  static rule_delete<J extends typeof Model>(
+  static rule_delete<T extends typeof Model, J extends typeof Model>(
+    this: T,
+    collection: J,
+    fn: (
+      user: InstanceType<J>,
+      document: InstanceType<T>
+    ) => MaybePromise<boolean>,
+    fetchDocument: true
+  ): void;
+  static rule_delete<T extends typeof Model, J extends typeof Model>(
     collection?: J | ((req: http.IncomingMessage) => MaybePromise<boolean>),
-    fn?: (user: InstanceType<J>) => MaybePromise<boolean>
+    fn?:
+      | ((user: InstanceType<J>) => MaybePromise<boolean>)
+      | ((
+          user: InstanceType<J>,
+          document: InstanceType<T>
+        ) => MaybePromise<boolean>),
+    fetchDocument: boolean = false
   ) {
     if (!this._rules_delete) this._rules_delete = [];
 
     this._rules_delete.push(
       collection && "_new" in collection
-        ? ["delete", collection, fn as (user: Model) => boolean]
+        ? ["delete", collection, fn as (user: Model) => boolean, fetchDocument]
         : ["delete", "*", collection]
     );
   }
@@ -254,6 +271,12 @@ export class Model {
     if (!queryResult) return;
 
     return this._new(queryResult);
+  }
+
+  static async findByIds<T extends typeof Model>(this: T, ids: string[]) {
+    const queryResult = await this.driver.findByIds(this.collection, ids);
+
+    return queryResult.map((o) => this._new(o));
   }
 
   static async findOne<T extends typeof Model>(
