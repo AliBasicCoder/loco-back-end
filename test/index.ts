@@ -59,12 +59,15 @@ Some2.rule_delete(Some);
 Some.rule_update();
 
 async function main() {
-  const router = (await init(
-    [Some2, Some],
-    expressRouter(4321),
-    new MongoDBDriver("mongodb://localhost:27017", "server-db-test"),
-    new FsFilesystem(path.join(__dirname, "files"))
-  )) as Router;
+  const router = (await init({
+    models: [Some2, Some],
+    router: expressRouter(4321),
+    defaultDriver: new MongoDBDriver(
+      "mongodb://localhost:27017",
+      "server-db-test"
+    ),
+    defaultFilesystem: new FsFilesystem(path.join(__dirname, "files")),
+  })) as Router;
 
   const app = express();
   app.use(router);

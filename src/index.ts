@@ -1,5 +1,4 @@
 // TODO consider supporting Deno
-import path from "path";
 import fs from "fs";
 import type http from "node:http";
 import cookie from "cookie";
@@ -415,14 +414,25 @@ export function setEnvironment(o: any) {
   Object.assign(INIT_ENVIRONMENT, o);
 }
 
-export async function init(
-  models: (typeof Model)[],
-  router: Router,
-  defaultDriver: DBDriver,
-  defaultFilesystem?: FileSystem,
-  plugins: LocoPlugin[] = [],
-  useEval = false
-) {
+interface InitOptions {
+  models: (typeof Model)[];
+  router: Router;
+  defaultDriver: DBDriver;
+  defaultFilesystem?: FileSystem;
+  plugins?: LocoPlugin[];
+  outputBundle?: string;
+}
+
+export async function init(options: InitOptions) {
+  const {
+    models,
+    router,
+    defaultDriver,
+    defaultFilesystem,
+    plugins,
+    outputBundle,
+  } = Object.assign({ plugins: [] as LocoPlugin[] }, options);
+
   let functionArgs = "";
   let result = "";
   models.forEach((model, i) => {
@@ -538,13 +548,13 @@ function init(${functionArgs}, ENVIRONMENT) {
 };`;
 
   let init_result;
-  if (useEval) {
+  if (outputBundle) {
+    result += "module.exports = init;";
+    fs.writeFileSync(outputBundle, result);
+    init_result = require(outputBundle)(...models, INIT_ENVIRONMENT);
+  } else {
     result += "init";
     init_result = eval(result);
-  } else {
-    result += "module.exports = init;";
-    fs.writeFileSync(path.join(__dirname, "__LOCO_BUILD.js"), result);
-    init_result = require("./__LOCO_BUILD.js")(...models, INIT_ENVIRONMENT);
   }
 
   const promises = [] as Promise<void>[];
