@@ -35,13 +35,13 @@ function validateGen(
   const d3 = join(key2, path2, false, false);
 
   if (sc.type === "BOOLEAN") {
-    if (sc.default) result += `if (${d} == null) ${d} = ${sc.default};`;
+    if ("default" in sc) result += `if (${d} == null) ${d} = ${sc.default};`;
     result += `if (${d} == "0" || ${d} === "" || ${d} === "false") ${d} = false;
 if (${d} == "1" || ${d} === "true") ${d} = true;
 if (typeof ${d} !== "boolean") return "'${d2}' is not a boolean";`;
   }
   if (sc.type === "NUMBER") {
-    if (sc.default) result += `if (${d} == null) ${d} = ${sc.default};`;
+    if ("default" in sc) result += `if (${d} == null) ${d} = ${sc.default};`;
     if (sc.nullable) result += `if (${d} != null) {`;
     result += `if (typeof ${d} === "string") ${d} = Number(${d});
 if (typeof ${d} !== "number" || Number.isNaN(${d})) return "'${d2}' is not a number";`;
@@ -76,7 +76,7 @@ return "'${d2}' is NOT a valid ID";`;
       }
       result += `} else ${d} = null;`;
     }
-    if (sc.default) result += `if (${d} == null) ${d} = ${sc.default};`;
+    if ("default" in sc) result += `if (${d} == null) ${d} = ${sc.default};`;
     if (sc.nullable) result += `if (${d} != null) {`;
     result += `if (typeof ${d} !== "string") return "'${d2}' is NOT a string";`;
     if (sc.min)
@@ -96,7 +96,7 @@ return "'${d2}' is NOT a valid ID";`;
     if (sc.nullable) result += `} else ${d} = null;`;
   }
   if (sc.type === "DATE") {
-    if (sc.default) result += `if (${d} == null) ${d} = ${sc.default};`;
+    if ("default" in sc) result += `if (${d} == null) ${d} = ${sc.default};`;
     if (sc.nullable) result += `if (${d} != null) {`;
     result += `if (typeof ${d} === "string" || typeof ${d} === "number") ${d} = new Date(${d});
 if (!(${d} instanceof Date) || isNaN(${d})) return "'${d2}' is NOT a date";`;
