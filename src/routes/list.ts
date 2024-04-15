@@ -56,8 +56,17 @@ if (
   if (authorize_result2) {
     authorized = true;
 `;
+        // TODO create function to convert id to ObjectIds better in filters
         if (rule[0] === "list_filter")
           result += `Object.assign(filter, authorize_result2);`;
+        if (rule[0] === "list_filter" && model.driver.ObjectId) {
+          result += `
+if (filter._id) {
+  if (filter._id.$in) filter._id.$in = filter._id.$in.map(e => new this.driver.ObjectId(e));
+  if (filter._id.$nin) filter._id.$nin = filter._id.$nin.map(e => new this.driver.ObjectId(e));
+  if (typeof filter._id === "string") filter._id = new this.driver.ObjectId(filter._id);
+}`;
+        }
         result += "  }\n}";
       } else result += `if (authorize_result) authorized = true;`;
       if (i !== 0) result += "}";
@@ -78,6 +87,14 @@ if (!authorize_result) {
 `;
     if (rule[0] === "list_filter")
       result += `Object.assign(filter, authorize_result);`;
+    if (rule[0] === "list_filter" && model.driver.ObjectId) {
+      result += `
+if (filter._id) {
+if (filter._id.$in) filter._id.$in = filter._id.$in.map(e => new this.driver.ObjectId(e));
+if (filter._id.$nin) filter._id.$nin = filter._id.$nin.map(e => new this.driver.ObjectId(e));
+if (typeof filter._id === "string") filter._id = new this.driver.ObjectId(filter._id);
+}`;
+    }
   }
   result += `const result = await this.driver.find(this.collection, filter, { limit, skip`;
   if (model._noSend.length > 0)
