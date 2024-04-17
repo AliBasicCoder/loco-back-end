@@ -1,9 +1,10 @@
 // TODO consider supporting Deno
 import fs from "fs";
-import type http from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import bcrypt from "bcrypt";
 import { v4 as uuid_v4 } from "uuid";
 import cookie, { CookieSerializeOptions } from "cookie";
+import { snake } from "case";
 import {
   AuthorizeFunction,
   BasicType,
@@ -25,7 +26,6 @@ import {
   noFn,
 } from "./types";
 import { STATE } from "./schema";
-import { snake } from "case";
 import { schemaValidateGen } from "./validation_generator";
 import {
   functionName,
@@ -37,7 +37,6 @@ import {
   $args,
 } from "./util";
 import { list } from "./routes/list";
-import { IncomingMessage, ServerResponse } from "node:http";
 import { create } from "./routes/create";
 import { del } from "./routes/delete";
 import { replace } from "./routes/replace";
@@ -91,24 +90,16 @@ export class Model {
   static _setOnUpload(object: any, path: string, value: any) {
     throw new Error("Method should be overwritten");
   }
-  static _list(req: http.IncomingMessage, res: http.ServerResponse) {
+  static _list(req: IncomingMessage, res: ServerResponse) {
     throw new Error("Method should be overwritten");
   }
-  static _create(req: http.IncomingMessage, res: http.ServerResponse) {
+  static _create(req: IncomingMessage, res: ServerResponse) {
     throw new Error("Method should be overwritten");
   }
-  static _update(
-    req: http.IncomingMessage,
-    res: http.ServerResponse,
-    id: string
-  ) {
+  static _update(req: IncomingMessage, res: ServerResponse, id: string) {
     throw new Error("Method should be overwritten");
   }
-  static _delete(
-    req: http.IncomingMessage,
-    res: http.ServerResponse,
-    ids: string[]
-  ) {
+  static _delete(req: IncomingMessage, res: ServerResponse, ids: string[]) {
     throw new Error("Method should be overwritten");
   }
 
@@ -121,15 +112,13 @@ export class Model {
     toObjectId = false
   ): string | void {}
 
-  static rule_list(
-    fn?: (req: http.IncomingMessage) => MaybePromise<boolean>
-  ): void;
+  static rule_list(fn?: (req: IncomingMessage) => MaybePromise<boolean>): void;
   static rule_list<J extends typeof Model>(
     collection: J,
     fn?: (user: InstanceType<J>) => MaybePromise<boolean>
   ): void;
   static rule_list<J extends typeof Model>(
-    collection?: J | ((req: http.IncomingMessage) => MaybePromise<boolean>),
+    collection?: J | ((req: IncomingMessage) => MaybePromise<boolean>),
     fn?: (user: InstanceType<J>) => MaybePromise<boolean>
   ) {
     if (!this._rules_list) this._rules_list = [];
@@ -142,14 +131,14 @@ export class Model {
   }
 
   static rule_create(
-    fn?: (req: http.IncomingMessage) => MaybePromise<boolean>
+    fn?: (req: IncomingMessage) => MaybePromise<boolean>
   ): void;
   static rule_create<J extends typeof Model>(
     collection: J,
     fn?: (user: InstanceType<J>) => MaybePromise<boolean>
   ): void;
   static rule_create<J extends typeof Model>(
-    collection?: J | ((req: http.IncomingMessage) => MaybePromise<boolean>),
+    collection?: J | ((req: IncomingMessage) => MaybePromise<boolean>),
     fn?: (user: InstanceType<J>) => MaybePromise<boolean>
   ) {
     if (!this._rules_create) this._rules_create = [];
@@ -162,7 +151,7 @@ export class Model {
   }
 
   static rule_delete(
-    fn?: (req: http.IncomingMessage) => MaybePromise<boolean>
+    fn?: (req: IncomingMessage) => MaybePromise<boolean>
   ): void;
   static rule_delete<J extends typeof Model>(
     collection: J,
@@ -178,7 +167,7 @@ export class Model {
     fetchDocument: true
   ): void;
   static rule_delete<T extends typeof Model, J extends typeof Model>(
-    collection?: J | ((req: http.IncomingMessage) => MaybePromise<boolean>),
+    collection?: J | ((req: IncomingMessage) => MaybePromise<boolean>),
     fn?:
       | ((user: InstanceType<J>) => MaybePromise<boolean>)
       | ((
@@ -197,9 +186,7 @@ export class Model {
   }
 
   static rule_list_filter<J extends typeof Model>(
-    fn: (
-      req: http.IncomingMessage
-    ) => MaybePromise<ToFilter<noFn<InstanceType<J>>>>
+    fn: (req: IncomingMessage) => MaybePromise<ToFilter<noFn<InstanceType<J>>>>
   ): void;
   static rule_list_filter<J extends typeof Model>(
     collection: J,
@@ -209,7 +196,7 @@ export class Model {
     collection:
       | J
       | ((
-          req: http.IncomingMessage
+          req: IncomingMessage
         ) => MaybePromise<ToFilter<noFn<InstanceType<J>>>>),
     fn?: (
       user: InstanceType<J>
@@ -225,7 +212,7 @@ export class Model {
   }
 
   static rule_update(
-    fn?: (req: http.IncomingMessage) => MaybePromise<boolean>
+    fn?: (req: IncomingMessage) => MaybePromise<boolean>
   ): void;
   static rule_update<T extends typeof Model, J extends typeof Model>(
     this: T,
@@ -237,7 +224,7 @@ export class Model {
   ): void;
   static rule_update<T extends typeof Model, J extends typeof Model>(
     this: T,
-    collection?: J | ((req: http.IncomingMessage) => MaybePromise<boolean>),
+    collection?: J | ((req: IncomingMessage) => MaybePromise<boolean>),
     fn?: (
       user: InstanceType<J>,
       object: InstanceType<T>

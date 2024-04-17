@@ -1,5 +1,5 @@
 import { Model } from ".";
-import { AnyType, CustomRouteItem, SchemaObject } from "./types";
+import { AnyType, CustomRouteItem } from "./types";
 
 function join(
   key: string,

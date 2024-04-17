@@ -1,9 +1,9 @@
-import { v4 as uuid_v4, validate } from "uuid";
-import mime from "mime-types";
 import fs from "node:fs";
 import path from "node:path";
-import { FileMetadata, FileSystem, Metadata } from "./types";
 import { Writable } from "node:stream";
+import mime from "mime-types";
+import { v4 as uuid_v4, validate } from "uuid";
+import { FileMetadata, FileSystem } from "./types";
 
 function idName(filename: string) {
   const lastDotIndex = filename.lastIndexOf(".");
