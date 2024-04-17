@@ -46,6 +46,7 @@ export * from "./types";
 export * from "./schema";
 export * from "./mongodb_driver";
 export * from "./client_generator";
+export * from "./dir_filesystem_driver";
 
 export class Model {
   static DEFAULT_LIMIT = 100;
