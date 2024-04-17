@@ -158,9 +158,9 @@ return "'${d2}' is not a valid reference";`;
     result += `if (${d} == null) ${d} = [];
 else if (!Array.isArray(${d})) ${d} = [${d}];`;
     if ("max" in sc)
-      result += `if (${d}.length > ${sc.max}) return "'${d2}' has too many items"`;
+      result += `if (${d}.length > ${sc.max}) return "'${d2}' has too many items";`;
     if ("min" in sc)
-      result += `if (${d}.length < ${sc.min}) return "'${d2}' has too few items"`;
+      result += `if (${d}.length < ${sc.min}) return "'${d2}' has too few items";`;
     result += `for (let i_${index} = 0; i_${index} < ${d}.length; i_${index}++) {`;
     result += validateGen(
       sc.sub_type,
