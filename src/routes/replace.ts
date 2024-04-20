@@ -167,6 +167,7 @@ if (authorize_result2) {
   }
   this.postCreate(result);
   this.postUpdate(result);
+  this._removeNoSend(result);
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(result));
 }`;

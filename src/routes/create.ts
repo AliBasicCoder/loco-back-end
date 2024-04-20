@@ -143,6 +143,7 @@ this.preUpdate(upload);
 const result = await this.driver.create(this.collection, upload);
 this.postCreate(result);
 this.postUpdate(result);
+this._removeNoSend(result);
 res.writeHead(200, { "Content-Type": "application/json" });
 res.end(JSON.stringify(result));
 }`;
