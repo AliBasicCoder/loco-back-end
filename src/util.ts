@@ -1,4 +1,4 @@
-import { Model } from ".";
+import { ArrayType, Model, ObjectType, TupleType } from ".";
 import { AnyType, BasicType, SchemaObject, isSchemaObject } from "./types";
 
 export function trimArray<T>(array: T[], item: T) {
@@ -184,6 +184,73 @@ export function setUpload(paths: (typeof Model)["_paths"]) {
   }
   result += "}";
   return result;
+}
+
+function removeExtraSub(
+  schema: SchemaObject | TupleType | ArrayType,
+  key: string,
+  index: number
+) {
+  if (isSchemaObject(schema)) {
+    let result = `
+const keys_${index} = [${Object.keys(schema).map((k) => "'" + k + "'")}];
+for (const key_${index} in ${key}) {
+  if (!keys_${index}.includes(key_${index}))
+    delete ${key}[key_${index}];
+}`;
+    for (const [sub_key, sub_type] of Object.entries(schema)) {
+      if (sub_type.type === "TUPLE" || sub_type.type === "ARRAY")
+        result += removeExtraSub(sub_type, `${key}.${sub_key}`, index + 1);
+      if (sub_type.type === "OBJECT")
+        result += removeExtraSub(
+          sub_type.schema,
+          `${key}.${sub_key}`,
+          index + 1
+        );
+    }
+    return result;
+  }
+  if (schema.type === "TUPLE") {
+    let result = `
+if (${key}.length > ${schema.sub_types.length}) ${key} = ${key}.slice(0, ${schema.sub_types.length});
+`;
+    schema.sub_types.forEach((sub_type, i) => {
+      if (sub_type.type === "TUPLE" || sub_type.type === "ARRAY")
+        result += removeExtraSub(sub_type, `${key}[${i}]`, index + 1);
+      if (sub_type.type === "OBJECT")
+        result += removeExtraSub(sub_type.schema, `${key}[${i}]`, index + 1);
+    });
+    return result;
+  }
+  if (
+    schema.sub_type.type === "TUPLE" ||
+    schema.sub_type.type === "ARRAY" ||
+    schema.sub_type.type === "OBJECT"
+  ) {
+    let result = `for (let i_${index} = 0; i_${index} < ${key}.length; i_${index}++) {`;
+    if (schema.sub_type.type === "OBJECT")
+      result += removeExtraSub(
+        schema.sub_type.schema,
+        `${key}[i_${index}]`,
+        index + 1
+      );
+    else
+      result += removeExtraSub(
+        schema.sub_type,
+        `${key}[i_${index}]`,
+        index + 1
+      );
+
+    return result + "}";
+  }
+
+  return "";
+}
+
+export function removeExtra(model: typeof Model) {
+  return `function (object) {
+${removeExtraSub(model._schema, "object", 0)}
+}`;
 }
 
 // from stack overflow

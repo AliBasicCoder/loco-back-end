@@ -107,7 +107,8 @@ export function replace(model: typeof Model) {
     res.writeHead(400, { "Content-Type": "text/plain" });
     res.end(validation_error);
     return;
-  }`;
+  }
+  if (isJson) this._removeExtra(upload);`;
 
   if (model._rules_update[0][1] !== "*") {
     result += "let authorized = false;";

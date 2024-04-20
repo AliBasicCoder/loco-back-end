@@ -102,7 +102,9 @@ if (validation_error) {
   res.writeHead(400, { "Content-Type": "text/plain" });
   res.end(validation_error);
   return;
-}`;
+}
+if (isJson) this._removeExtra(upload);
+`;
 
   if (model._rules_create[0][1] !== "*") {
     result += "let authorized = false;";

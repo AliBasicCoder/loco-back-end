@@ -36,6 +36,7 @@ import {
   setUpload,
   $args,
   matchMime,
+  removeExtra,
 } from "./util";
 import { list } from "./routes/list";
 import { create } from "./routes/create";
@@ -101,6 +102,9 @@ export class Model {
     throw new Error("Method should be overwritten");
   }
   static _delete(req: IncomingMessage, res: ServerResponse, ids: string[]) {
+    throw new Error("Method should be overwritten");
+  }
+  static _removeExtra(object: any) {
     throw new Error("Method should be overwritten");
   }
 
@@ -502,6 +506,7 @@ export async function init(options: InitOptions) {
     result += `${model._functionName}._setOnUpload = ${setUpload(
       model._paths
     )};`;
+    result += `${model._functionName}._removeExtra = ${removeExtra(model)};`;
     // TODO consider creating base functions and using
     // TODO them since the code produced is extremely similar anyway
     if (model._rules_list.length >= 1)
