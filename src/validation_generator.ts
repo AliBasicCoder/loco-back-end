@@ -66,34 +66,36 @@ if (r_${index} === false) return "'${d2}' rejected by validator";`;
       result += `if (${d} != null) {`;
       if (model.driver.ObjectId) {
         result += `
-if (!(${d} instanceof this.driver.ObjectId || (typeof ${d} === "string" && this.driver.isValidId(${d})))) 
-  return "'${d2}' is NOT a valid ID";
-if (typeof ${d} === "string" && toObjectId) ${d} = new this.driver.ObjectId(${d});
-if (${d} instanceof this.driver.ObjectId && !toObjectId) ${d} = ${d}.toString();`;
+      if (!(${d} instanceof this.driver.ObjectId || (typeof ${d} === "string" && this.driver.isValidId(${d}))))
+        return "'${d2}' is NOT a valid ID";
+      if (typeof ${d} === "string" && toObjectId) ${d} = new this.driver.ObjectId(${d});
+      if (${d} instanceof this.driver.ObjectId && !toObjectId) ${d} = ${d}.toString();`;
       } else {
         result += `if (typeof ${d} !== "string" || !this.driver.isValidId(${d}))
-return "'${d2}' is NOT a valid ID";`;
+      return "'${d2}' is NOT a valid ID";`;
       }
-      result += `} else ${d} = null;`;
-    }
-    if ("default" in sc) result += `if (${d} == null) ${d} = "${sc.default}";`;
-    if (sc.nullable) result += `if (${d} != null) {`;
-    result += `if (typeof ${d} !== "string") return "'${d2}' is NOT a string";`;
-    if (sc.min)
-      result += `if (${d}.length < ${sc.min}) return "'${d2}' is too short (should be at least ${sc.min} characters)";`;
-    if (sc.max)
-      result += `if (${d}.length > ${sc.max}) return "'${d2}' is too long (should be at most ${sc.max} characters)";`;
-    if (sc.fixedLength)
-      result += `if (${d}.length !== ${sc.fixedLength}) return "'${d2}' should be exactly ${sc.fixedLength} characters";`;
-    if (sc.enum)
-      result += `if (!${d3}.enum.includes(${d})) return "'${d2}' is NOT one of possible values";`;
-    if (sc.validator) {
-      result += `const r_${index} = (${d3}.validator)(${d}, "${d2}");
+      result += `}`;
+    } else {
+      if ("default" in sc)
+        result += `if (${d} == null) ${d} = "${sc.default}";`;
+      if (sc.nullable) result += `if (${d} != null) {`;
+      result += `if (typeof ${d} !== "string") return "'${d2}' is NOT a string";`;
+      if (sc.min)
+        result += `if (${d}.length < ${sc.min}) return "'${d2}' is too short (should be at least ${sc.min} characters)";`;
+      if (sc.max)
+        result += `if (${d}.length > ${sc.max}) return "'${d2}' is too long (should be at most ${sc.max} characters)";`;
+      if (sc.fixedLength)
+        result += `if (${d}.length !== ${sc.fixedLength}) return "'${d2}' should be exactly ${sc.fixedLength} characters";`;
+      if (sc.enum)
+        result += `if (!${d3}.enum.includes(${d})) return "'${d2}' is NOT one of possible values";`;
+      if (sc.validator) {
+        result += `const r_${index} = (${d3}.validator)(${d}, "${d2}");
   if (typeof r_${index} === "string") return r_${index};
   if (r_${index} === false) return "'${d2}' rejected by validator";`;
-      index++;
+        index++;
+      }
+      if (sc.nullable) result += `} else ${d} = null;`;
     }
-    if (sc.nullable) result += `} else ${d} = null;`;
   }
   if (sc.type === "DATE") {
     if ("default" in sc)
