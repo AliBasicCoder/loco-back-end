@@ -178,3 +178,17 @@ export function toFormData(
   }
   if (r) return formData;
 }
+
+export function matchMime(rules: string | string[], str: string) {
+  if (!Array.isArray(rules)) rules = [rules];
+  for (const rule of rules) {
+    const [type, subType] = rule.split(/ |;/)[0].split(/\\|\//);
+    const [type2, subType2] = str.split(/ |;/)[0].split(/\\|\//);
+    if (
+      (type === "*" || type === "**" || type === type2) &&
+      (subType === "*" || subType === "**" || subType === subType2)
+    )
+      return true;
+  }
+  return false;
+}

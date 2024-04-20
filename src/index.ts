@@ -35,6 +35,7 @@ import {
   trimArray,
   setUpload,
   $args,
+  matchMime,
 } from "./util";
 import { list } from "./routes/list";
 import { create } from "./routes/create";
@@ -401,7 +402,7 @@ export type ErrorHandler = (
   error: any
 ) => void;
 
-const INIT_ENVIRONMENT = { getMetadata };
+const INIT_ENVIRONMENT = { getMetadata, matchMime };
 
 export function setEnvironment(o: any) {
   Object.assign(INIT_ENVIRONMENT, o);
@@ -535,7 +536,7 @@ function collectStr(req, MAX_SIZE = 4194304) {
 }
 const busboy = require("busboy");  
 function init(${functionArgs}, ENVIRONMENT) { 
-  const { getMetadata } = ENVIRONMENT;
+  const { getMetadata, matchMime } = ENVIRONMENT;
   ${result};
   ${plugins.map((fn) => fn(models)).join(";")}; ${router(models)}
 };`;

@@ -50,8 +50,9 @@ function customRoutes(model: typeof Model) {
       .join(", ");
 
     if (route.returnType?.type === "REF")
-      result += `): ${route.returnType.to._functionName} `;
-    else if (route.returnType) result += `): ${base(route.returnType)} `;
+      result += `): Promise<${route.returnType.to._functionName}> `;
+    else if (route.returnType)
+      result += `): Promise<${base(route.returnType)}> `;
     else result += `) `;
     result += `{
     const __object = { ${route.argumentsName.join(",")} };
@@ -78,7 +79,7 @@ function customRoutes(model: typeof Model) {
 export function webCollectionsCreator(dir: string, models: (typeof Model)[]) {
   let result = `// @ts-nocheck
 // AUTO-GENERATED PLEASE DO NOT EDIT
-import { Model, init, METADATA, toFormData, RUNNER } from "loco/dist/client_base";
+import { Model, toFormData, RUNNER, matchMime } from "loco_backend/dist/src/client_base";
 import { fetcher } from "./fetcher";
 RUNNER.fetcher = fetcher
 `;
