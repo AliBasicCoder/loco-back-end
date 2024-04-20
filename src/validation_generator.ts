@@ -76,7 +76,7 @@ return "'${d2}' is NOT a valid ID";`;
       }
       result += `} else ${d} = null;`;
     }
-    if ("default" in sc) result += `if (${d} == null) ${d} = ${sc.default};`;
+    if ("default" in sc) result += `if (${d} == null) ${d} = "${sc.default}";`;
     if (sc.nullable) result += `if (${d} != null) {`;
     result += `if (typeof ${d} !== "string") return "'${d2}' is NOT a string";`;
     if (sc.min)
@@ -96,7 +96,8 @@ return "'${d2}' is NOT a valid ID";`;
     if (sc.nullable) result += `} else ${d} = null;`;
   }
   if (sc.type === "DATE") {
-    if ("default" in sc) result += `if (${d} == null) ${d} = ${sc.default};`;
+    if ("default" in sc)
+      result += `if (${d} == null) ${d} = new Date(${sc.default?.getTime()});`;
     if (sc.nullable) result += `if (${d} != null) {`;
     result += `if (typeof ${d} === "string" || typeof ${d} === "number") ${d} = new Date(${d});
 if (!(${d} instanceof Date) || isNaN(${d})) return "'${d2}' is NOT a date";`;
