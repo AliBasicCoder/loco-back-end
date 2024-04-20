@@ -160,6 +160,11 @@ if (authorize_result2) {
 
   result += `this.preUpdate(upload);
   const result = await this.driver.replaceById(this.collection, id, upload);
+  if (result == null) {
+    res.writeHead(404, { "Content-Type": "text/plain" });
+    res.end("Document Not Found");
+    return;
+  }
   this.postCreate(result);
   this.postUpdate(result);
   res.writeHead(200, { "Content-Type": "application/json" });
