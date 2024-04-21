@@ -96,6 +96,9 @@ if (!isJson) {
   }
 }
 this._removeNoReceive(upload);
+this.preValidateCreate(upload);
+this.preValidateUpdate(upload);
+this.preValidate(upload);
 const validation_error = this.validate(upload);
 if (validation_error) {
   destroy?.(validation_error);

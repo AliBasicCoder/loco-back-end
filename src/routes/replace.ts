@@ -117,6 +117,8 @@ if (!oldDocument) {
   Object.assign(upload, oldDocument);`;
   }
   result += `
+  this.preValidateUpdate(upload);
+  this.preValidate(upload);
   const validation_error = this.validate(upload);
   if (validation_error) {
     destroy?.(validation_error);

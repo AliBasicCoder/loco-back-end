@@ -29,25 +29,16 @@ import { webCollectionsCreator } from "../src/client_generator";
 
 class Some extends Model {
   _id = id();
-  createAt = date({ noReceive: true, skip: true });
-  updateAt = date({ noReceive: true, skip: true });
+  createAt = date({ noReceive: true });
+  updateAt = date({ noReceive: true });
 
-  static preUpdate<T extends typeof Model>(
-    this: T,
-    newObject: noFn<InstanceType<T>>
-  ): void {
-    // @ts-ignore
-    newObject.updateAt = new Date();
+  static preValidateCreate(object: Some): void {
+    console.log(object);
+    object.createAt = new Date();
   }
 
-  static preCreate<T extends typeof Model>(
-    this: T,
-    object: noFn<InstanceType<T>>
-  ): void {
+  static preValidateUpdate(object: Some): void {
     console.log(object);
-    // @ts-ignore
-    object.createAt = new Date();
-    // @ts-ignore
     object.updateAt = new Date();
   }
 }

@@ -373,27 +373,20 @@ export class Model {
     );
   }
 
-  static preCreate<T extends typeof Model>(
-    this: T,
-    object: noFn<InstanceType<T>>
-  ) {}
-  static postCreate<T extends typeof Model>(
-    this: T,
-    object: noFn<InstanceType<T>>
-  ) {}
+  static preCreate(object: any) {}
+  static postCreate(object: any) {}
 
-  static preUpdate<T extends typeof Model>(
-    this: T,
-    newObject: noFn<InstanceType<T>>
-    // oldObject: noFn<InstanceType<T>> | null
+  static preUpdate(
+    newObject: any
+    // oldObject: any | null
   ) {}
-  static postUpdate<T extends typeof Model>(
-    this: T,
-    object: noFn<InstanceType<T>>
-  ) {}
+  static postUpdate(object: any) {}
 
   static preDelete(ids: string[]) {}
   static postDelete(ids: string[]) {}
+  static preValidate(object: any) {}
+  static preValidateUpdate(object: any) {}
+  static preValidateCreate(object: any) {}
 }
 
 export type LocoPlugin = (models: (typeof Model)[]) => string;
