@@ -1,8 +1,11 @@
 import path from "path";
 import {
+  CustomError,
   GET,
+  LocoError,
   Model,
   allow,
+  error,
   expressRouter,
   httpRouter,
   init,
@@ -32,12 +35,13 @@ class Some extends Model {
   createAt = date({ noReceive: true });
   updateAt = date({ noReceive: true });
 
-  static preValidateCreate(object: Some): void {
-    console.log(object);
-    object.createAt = new Date();
+  static preValidateCreate(object: Some): LocoError | void {
+    // console.log(object);
+    // object.createAt = new Date();
+    return error(404, "not found");
   }
 
-  static preValidateUpdate(object: Some): void {
+  static preValidateUpdate(object: Some): LocoError | void {
     console.log(object);
     object.updateAt = new Date();
   }

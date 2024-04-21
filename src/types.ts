@@ -372,6 +372,14 @@ export type Redirect = {
   status: number;
 };
 
+export type LocoError = {
+  [ERROR]: CustomError;
+};
+
+export type LocoReducers = {
+  [REDIRECT]: Redirect;
+};
+
 export const getMetadata = (
   o: any
 ): [CustomError | undefined, Redirect | undefined] =>

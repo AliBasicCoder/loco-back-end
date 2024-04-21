@@ -96,9 +96,39 @@ if (!isJson) {
   }
 }
 this._removeNoReceive(upload);
-this.preValidateCreate(upload);
-this.preValidateUpdate(upload);
-this.preValidate(upload);
+const [__result1_error] = getMetadata(this.preValidateCreate(upload));
+if (__result1_error) {
+  if (typeof __result1_error.reason === "string") {
+    res.writeHead(__result1_error.status, { "Content-Type": "text/plain" });
+    res.end(__result1_error.reason);
+    return;
+  }
+  res.writeHead(__result1_error.status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(__result1_error.reason));
+  return;
+}
+const [__result2_error] = getMetadata(this.preValidateUpdate(upload));
+if (__result2_error) {
+  if (typeof __result2_error.reason === "string") {
+    res.writeHead(__result2_error.status, { "Content-Type": "text/plain" });
+    res.end(__result2_error.reason);
+    return;
+  }
+  res.writeHead(__result2_error.status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(__result2_error.reason));
+  return;
+}
+const [__result3_error] = getMetadata(this.preValidate(upload));
+if (__result3_error) {
+  if (typeof __result3_error.reason === "string") {
+    res.writeHead(__result3_error.status, { "Content-Type": "text/plain" });
+    res.end(__result3_error.reason);
+    return;
+  }
+  res.writeHead(__result3_error.status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(__result3_error.reason));
+  return;
+}
 const validation_error = this.validate(upload);
 if (validation_error) {
   destroy?.(validation_error);
@@ -143,8 +173,29 @@ if (!authorize_result) {
 }`;
   }
 
-  result += `this.preCreate(upload);
-this.preUpdate(upload);
+  result += `
+const [__result4_error] = getMetadata(this.preCreate(upload));
+if (__result4_error) {
+  if (typeof __result4_error.reason === "string") {
+    res.writeHead(__result4_error.status, { "Content-Type": "text/plain" });
+    res.end(__result4_error.reason);
+    return;
+  }
+  res.writeHead(__result4_error.status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(__result4_error.reason));
+  return;
+}
+const [__result5_error] = getMetadata(this.preUpdate(upload));
+if (__result5_error) {
+  if (typeof __result5_error.reason === "string") {
+    res.writeHead(__result5_error.status, { "Content-Type": "text/plain" });
+    res.end(__result5_error.reason);
+    return;
+  }
+  res.writeHead(__result5_error.status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(__result5_error.reason));
+  return;
+}
 const result = await this.driver.create(this.collection, upload);
 this.postCreate(result);
 this.postUpdate(result);

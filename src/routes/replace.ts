@@ -117,8 +117,28 @@ if (!oldDocument) {
   Object.assign(upload, oldDocument);`;
   }
   result += `
-  this.preValidateUpdate(upload);
-  this.preValidate(upload);
+  const [__result2_error] = getMetadata(this.preValidateUpdate(upload));
+  if (__result2_error) {
+    if (typeof __result2_error.reason === "string") {
+      res.writeHead(__result2_error.status, { "Content-Type": "text/plain" });
+      res.end(__result2_error.reason);
+      return;
+    }
+    res.writeHead(__result2_error.status, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(__result2_error.reason));
+    return;
+  }
+  const [__result3_error] = getMetadata(this.preValidate(upload));
+  if (__result3_error) {
+    if (typeof __result3_error.reason === "string") {
+      res.writeHead(__result3_error.status, { "Content-Type": "text/plain" });
+      res.end(__result3_error.reason);
+      return;
+    }
+    res.writeHead(__result3_error.status, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(__result3_error.reason));
+    return;
+  }
   const validation_error = this.validate(upload);
   if (validation_error) {
     destroy?.(validation_error);
@@ -177,14 +197,24 @@ if (authorize_result2) {
   }`;
   }
 
-  result += `this.preUpdate(upload);
+  result += `
+  const [__result5_error] = getMetadata(this.preUpdate(upload));
+  if (__result5_error) {
+    if (typeof __result5_error.reason === "string") {
+      res.writeHead(__result5_error.status, { "Content-Type": "text/plain" });
+      res.end(__result5_error.reason);
+      return;
+    }
+    res.writeHead(__result5_error.status, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(__result5_error.reason));
+    return;
+  }
   const result = await this.driver.replaceById(this.collection, id, upload);
   if (result == null) {
     res.writeHead(404, { "Content-Type": "text/plain" });
     res.end("Document Not Found");
     return;
   }
-  this.postCreate(result);
   this.postUpdate(result);
   this._removeNoSend(result);
   res.writeHead(200, { "Content-Type": "application/json" });

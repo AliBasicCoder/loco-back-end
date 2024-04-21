@@ -16,6 +16,7 @@ import {
   FileType,
   ListFilterRule,
   ListRule,
+  LocoError,
   MaybePromise,
   Rule,
   SchemaObject,
@@ -373,20 +374,20 @@ export class Model {
     );
   }
 
-  static preCreate(object: any) {}
+  static preCreate(object: any): LocoError | void {}
   static postCreate(object: any) {}
 
   static preUpdate(
     newObject: any
     // oldObject: any | null
-  ) {}
+  ): LocoError | void {}
   static postUpdate(object: any) {}
 
-  static preDelete(ids: string[]) {}
+  static preDelete(ids: string[]): LocoError | void {}
   static postDelete(ids: string[]) {}
-  static preValidate(object: any) {}
-  static preValidateUpdate(object: any) {}
-  static preValidateCreate(object: any) {}
+  static preValidate(object: any): LocoError | void {}
+  static preValidateUpdate(object: any): LocoError | void {}
+  static preValidateCreate(object: any): LocoError | void {}
 }
 
 export type LocoPlugin = (models: (typeof Model)[]) => string;

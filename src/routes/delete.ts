@@ -59,7 +59,20 @@ return;
 }`;
   }
 
-  result += `await this.driver.deleteWithIds(this.collection, ids);
+  result += `
+const [__result1_error] = getMetadata(this.preDelete(ids));
+if (__result1_error) {
+  if (typeof __result1_error.reason === "string") {
+    res.writeHead(__result1_error.status, { "Content-Type": "text/plain" });
+    res.end(__result1_error.reason);
+    return;
+  }
+  res.writeHead(__result1_error.status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(__result1_error.reason));
+  return;
+}
+await this.driver.deleteWithIds(this.collection, ids);
+this.postDelete(ids);
 res.writeHead(200, { "Content-Type": "text/plain" });
 res.end("OK");
 return;
