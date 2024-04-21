@@ -47,7 +47,7 @@ export function removeProperties(propertiesArray: (number | string)[][]) {
       continue;
     }
     let acc = "object";
-    let index = 1;
+    let index = 0;
     for (let i = 0; i < properties.length; i++) {
       const property = properties[i];
       if (i === properties.length - 1) {
