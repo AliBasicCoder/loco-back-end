@@ -6,7 +6,18 @@ export function replace(model: typeof Model) {
     res.writeHead(400, { "Content-Type": "text/plain" });
     res.end("Bad Request");
     return;
+  }`;
+  if (model._noReceive.length > 0) {
+    result += `const oldDocument = await this.driver.findById(this.collection, id, { project: ${JSON.stringify(
+      noReceiveToProjection(model._noReceive)
+    )} });
+if (!oldDocument) {
+  res.writeHead(404, { "Content-Type": "text/plain" });
+  res.end("Document Not Found");
+  return;
+}`;
   }
+  result += `
   const isJson = req.headers["content-type"] === "application/json";
   if (
     !(isJson || req.headers["content-type"]?.startsWith("multipart/form-data"))
@@ -99,8 +110,13 @@ export function replace(model: typeof Model) {
       res.end("Bad Request");
       return;
     }
-  }
+  }`;
+  if (model._noReceive.length > 0) {
+    result += `
   this._removeNoReceive(upload);
+  Object.assign(upload, oldDocument);`;
+  }
+  result += `
   const validation_error = this.validate(upload);
   if (validation_error) {
     destroy?.(validation_error);
@@ -173,5 +189,15 @@ if (authorize_result2) {
   res.end(JSON.stringify(result));
 }`;
 
+  return result;
+}
+
+// TODO make sure these projection (for noSendToProjection as well) are fully able to
+// TODO handle all types of data + polyfill any unsupported behavior with JS
+function noReceiveToProjection(paths: (typeof Model)["_noReceive"]) {
+  const result = {} as any;
+  for (const path of paths) {
+    result[path.filter((i) => typeof i === "string").join(".")] = 1;
+  }
   return result;
 }
