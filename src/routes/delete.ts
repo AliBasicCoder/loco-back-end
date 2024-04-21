@@ -18,7 +18,7 @@ for (const id of ids) {
       if (i !== 0) result += `if (!authorized) {`;
       result += `const authorize_result = await ${
         collection._functionName
-      }.authorize(req, ${!!fn});`;
+      }.authorize({ req, res }, ${!!fn});`;
       if (fn) {
         if (rule[3]) {
           result += `if (authorize_result) {

@@ -342,8 +342,14 @@ export interface Runner {
   server?: http.Server;
 }
 
+export type Context = {
+  req: http.IncomingMessage;
+  res: http.ServerResponse;
+  [key: string]: any;
+};
+
 export type AuthorizeFunction = (
-  req: http.IncomingMessage,
+  ctx: Context,
   returnUser: boolean
 ) => Promise<boolean | object>;
 // Other Types

@@ -134,13 +134,14 @@ if (validation_error) {
   res.writeHead(400, { "Content-Type": "text/plain" });
   res.end(validation_error);
   return;
-}`;
+}
+const ctx = { req, res };`;
     }
     if (route.authorization.length > 0) {
       result += "let user;";
       route.authorization.forEach((m, i) => {
         if (i !== 0) result += `if (!user) {`;
-        result += `user = ${m._functionName}.authorize(req, true);`;
+        result += `user = ${m._functionName}.authorize(ctx, true);`;
         if (i !== 0) result += "}";
       });
       result += `if (!user) {
@@ -156,22 +157,22 @@ if (validation_error) {
     if (route.isStatic && route.authorization.length > 0) {
       result += `const result = await this.${key}(user, ${route.argumentsName
         .map((_, i) => "arg" + i)
-        .join(", ")}, { req, res });`;
+        .join(", ")}, ctx);`;
     }
     if (route.isStatic && route.authorization.length === 0) {
       result += `const result = await this.${key}(${route.argumentsName
         .map((_, i) => "arg" + i)
-        .join(", ")}, { req, res });`;
+        .join(", ")}, ctx);`;
     }
     if (!route.isStatic && route.authorization.length > 0) {
       result += `const result = await currentDocument.${key}(user, ${route.argumentsName
         .map((_, i) => "arg" + i)
-        .join(", ")}, { req, res });`;
+        .join(", ")}, ctx);`;
     }
     if (!route.isStatic && route.authorization.length === 0) {
       result += `const result = await currentDocument.${key}(${route.argumentsName
         .map((_, i) => "arg" + i)
-        .join(", ")}, { req, res });`;
+        .join(", ")}, ctx);`;
     }
     result += `
 const [result_error, result_redirect] = getMetadata(result);

@@ -147,7 +147,7 @@ if (isJson) this._removeExtra(upload);
       if (i !== 0) result += `if (!authorized) {`;
       result += `const authorize_result = await ${
         collection._functionName
-      }.authorize(req, ${!!fn});`;
+      }.authorize({ req, res }, ${!!fn});`;
       if (fn) {
         result += `if (authorize_result) {
   const authorize_result2 = await this._rules_create[${i}][2](authorize_result);

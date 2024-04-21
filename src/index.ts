@@ -8,6 +8,7 @@ import { snake } from "case";
 import {
   AuthorizeFunction,
   BasicType,
+  Context,
   CreateRule,
   CustomRouteItem,
   DBDriver,
@@ -777,14 +778,14 @@ export function sessionAuth(
   sessionCollection: typeof Model,
   antiCSRF = true
 ): AuthorizeFunction {
-  return async (req, returnUser) => {
-    if (!req.headers.cookie) {
+  return async (ctx, returnUser) => {
+    if (!ctx.req.headers.cookie) {
       return false;
     }
     const cookies = (
-      (req as any).cookies
-        ? (req as any).cookies
-        : cookie.parse(req.headers.cookie)
+      (ctx.req as any).cookies
+        ? (ctx.req as any).cookies
+        : cookie.parse(ctx.req.headers.cookie)
     ) as Record<string, string>;
     const id = cookies.SessionID;
     if (!id) return false;
@@ -792,10 +793,11 @@ export function sessionAuth(
     const session = await sessionCollection.findOne({ id });
     if (
       !session ||
-      (antiCSRF && (session as any).anti_csrf !== req.headers.anti_csrf)
+      (antiCSRF && (session as any).anti_csrf !== ctx.req.headers.anti_csrf)
     )
       return false;
-
+    // pass session to ctx, useful for some custom routes
+    ctx.session = session;
     if (returnUser) {
       const user = await collection.findById((session as any).user);
       // TODO should session be removed?
@@ -845,11 +847,7 @@ export function emailPasswordSessionLogin(
     authorization: [],
   };
 
-  return async (
-    email: string,
-    password: string,
-    ctx: { req: IncomingMessage; res: ServerResponse }
-  ) => {
+  return async (email: string, password: string, ctx: Context) => {
     const user = await collection.findOne({ [op.emailProperty]: email });
     if (
       !user ||
@@ -873,6 +871,7 @@ export function emailPasswordSessionLogin(
       "cookie",
       cookie.serialize("SessionID", session.id, op.cookieOptions)
     );
+    ctx.session = session;
 
     return session;
   };
