@@ -207,6 +207,7 @@ for (const key_${index} in ${key}) {
           `${key}.${sub_key}`,
           index + 1
         );
+      index++;
     }
     return result;
   }
@@ -219,6 +220,7 @@ if (${key}.length > ${schema.sub_types.length}) ${key} = ${key}.slice(0, ${schem
         result += removeExtraSub(sub_type, `${key}[${i}]`, index + 1);
       if (sub_type.type === "OBJECT")
         result += removeExtraSub(sub_type.schema, `${key}[${i}]`, index + 1);
+      index++;
     });
     return result;
   }
@@ -240,7 +242,7 @@ if (${key}.length > ${schema.sub_types.length}) ${key} = ${key}.slice(0, ${schem
         `${key}[i_${index}]`,
         index + 1
       );
-
+    index++;
     return result + "}";
   }
 
