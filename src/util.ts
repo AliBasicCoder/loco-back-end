@@ -51,19 +51,19 @@ export function removeProperties(propertiesArray: (number | string)[][]) {
     let index = 0;
     for (let i = 0; i < properties.length; i++) {
       const property = properties[i];
-      if (i === properties.length - 1) {
-        acc += `?.${property}`;
-        result += `delete ${acc};`;
-        result += "}".repeat(index);
-        break;
-      }
       if (typeof property === "string") {
         acc += `?.${property}`;
-        continue;
+      } else if (property !== -1) {
+        acc += `?.[${property}]`;
+      } else {
+        result += `if (Array.isArray(${acc})) for (let i_${index} = 0; i_${index} < ${acc}.length; i_${index}++) {`;
+        acc += `?.[i_${index}]`;
+        index++;
       }
-      result += `if (Array.isArray(${acc})) for (let i_${index} = 0; i_${index} < ${acc}.length; i_${index}++) {`;
-      acc += `?.[i_${index}]`;
-      index++;
+      if (i === properties.length - 1) {
+        result += `delete ${acc};`;
+        result += "}".repeat(index);
+      }
     }
   }
   result += "}";
@@ -254,6 +254,49 @@ export function removeExtra(model: typeof Model) {
   return `function (object) {
 ${removeExtraSub(model._schema, "object", 0)}
 }`;
+}
+
+export function genToObjectId(model: typeof Model, to = true) {
+  // TODO check if any path is optional
+  let result = `function (object) {\n`;
+  if (to) result += `object._id = new this.driver.ObjectId(object._id);`;
+  else result += `object._id = object._id.toString();`;
+  for (const [properties] of model._ref) {
+    if (!properties.includes(-1)) {
+      const acc = properties.reduce(
+        (pv, current) =>
+          pv + (typeof current === "number" ? `[${current}]` : `.${current}`),
+        ""
+      );
+      result += to
+        ? `object${acc} = new this.driver.ObjectId(object${acc});`
+        : `object${acc} = object${acc}.toString();`;
+      continue;
+    }
+    let acc = "object";
+    let index = 0;
+    for (let i = 0; i < properties.length; i++) {
+      const property = properties[i];
+
+      if (typeof property === "string") {
+        acc += `.${property}`;
+      } else if (property !== -1) {
+        acc += `[${property}]`;
+      } else {
+        result += `for (let i_${index} = 0; i_${index} < ${acc}.length; i_${index}++) {`;
+        acc += `[i_${index}]`;
+        index++;
+      }
+      if (i === properties.length - 1) {
+        result += to
+          ? `${acc} = new this.driver.ObjectId(${acc});`
+          : `${acc} = ${acc}.toString();`;
+        result += "}".repeat(index);
+      }
+    }
+  }
+
+  return result + "}";
 }
 
 // from stack overflow

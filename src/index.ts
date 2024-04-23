@@ -19,6 +19,7 @@ import {
   ListRule,
   LocoError,
   MaybePromise,
+  ReferenceType,
   Rule,
   SchemaObject,
   ToFilter,
@@ -39,6 +40,7 @@ import {
   $args,
   matchMime,
   removeExtra,
+  genToObjectId,
 } from "./util";
 import { list } from "./routes/list";
 import { create } from "./routes/create";
@@ -70,7 +72,7 @@ export class Model {
   static _noReceive: (string | number)[][] = [["_id"]];
   static _uniqueIndex: (string | number)[][] = [];
   static _files: [(string | number)[], FileType][] = [];
-  static _ref: (string | number)[][] = [];
+  static _ref: [(string | number)[], ReferenceType][] = [];
   static driver: DBDriver;
   static filesystem: FileSystem;
   declare _id: string;
@@ -107,6 +109,12 @@ export class Model {
     throw new Error("Method should be overwritten");
   }
   static _removeExtra(object: any) {
+    throw new Error("Method should be overwritten");
+  }
+  static _toObjectId(object: any) {
+    throw new Error("Method should be overwritten");
+  }
+  static _fromObjectId(object: any) {
     throw new Error("Method should be overwritten");
   }
 
@@ -478,9 +486,8 @@ export async function init(options: InitOptions) {
     model._uniqueIndex = model._paths
       .filter(([_, t]) => t.type === "STRING" && t.unique)
       .map(([path]) => path);
-    model._ref = model._paths
-      .filter(([_, t]) => t.type === "REF")
-      .map(([path]) => path);
+    // @ts-ignore
+    model._ref = model._paths.filter(([_, t]) => t.type === "REF");
 
     if (model._files.length > 0 && !model.filesystem)
       throw new Error(
@@ -513,6 +520,13 @@ export async function init(options: InitOptions) {
       result += `${model._functionName}._delete = ${del(model)};`;
     if (model._rules_update.length >= 1)
       result += `${model._functionName}._replace = ${replace(model)};`;
+    if (model._ref.length >= 1) {
+      result += `${model._functionName}._toObjectId = ${genToObjectId(model)};`;
+      result += `${model._functionName}._fromObjectId = ${genToObjectId(
+        model,
+        false
+      )};`;
+    }
 
     if (!model._customRoutes) model._customRoutes = {};
 
