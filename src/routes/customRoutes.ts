@@ -157,22 +157,22 @@ const ctx = { req, res };`;
     if (route.isStatic && route.authorization.length > 0) {
       result += `const result = await this.${key}(user, ${route.argumentsName
         .map((_, i) => "arg" + i)
-        .join(", ")}, ctx);`;
+        .join(", ")}${route.argumentsName.length > 0 ? ", " : ""}ctx);`;
     }
     if (route.isStatic && route.authorization.length === 0) {
       result += `const result = await this.${key}(${route.argumentsName
         .map((_, i) => "arg" + i)
-        .join(", ")}, ctx);`;
+        .join(", ")}${route.argumentsName.length > 0 ? ", " : ""}ctx);`;
     }
     if (!route.isStatic && route.authorization.length > 0) {
       result += `const result = await currentDocument.${key}(user, ${route.argumentsName
         .map((_, i) => "arg" + i)
-        .join(", ")}, ctx);`;
+        .join(", ")}${route.argumentsName.length > 0 ? ", " : ""}ctx);`;
     }
     if (!route.isStatic && route.authorization.length === 0) {
       result += `const result = await currentDocument.${key}(${route.argumentsName
         .map((_, i) => "arg" + i)
-        .join(", ")}, ctx);`;
+        .join(", ")}${route.argumentsName.length > 0 ? ", " : ""}ctx);`;
     }
     result += `
 const [result_error, result_redirect] = getMetadata(result);
@@ -200,9 +200,15 @@ if (!result) {
       result += `${route.returnType.to._functionName}._removeNoSend(result);`;
     }
     result += `
-res.writeHead(200, { "Content-Type": "application/json" });
-res.end(JSON.stringify(result));
-return;
+if (typeof result === "string") {
+  res.writeHead(200, { "Content-Type": "text/html" });
+  res.end(result);
+  return;
+} else {
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(result));
+  return;
+}
 };`;
   }
 
