@@ -205,7 +205,8 @@ if (__result5_error) {
   res.writeHead(__result5_error.status, { "Content-Type": "application/json" });
   res.end(JSON.stringify(__result5_error.reason));
   return;
-}
+}`;
+  result += `
 const result = await this.driver.create(this.collection, upload);
 `;
   if (model.postCreate) result += `await this?.postCreate(result);\n`;

@@ -701,7 +701,7 @@ const router = express.Router();
         result += `router.${route.method}("/${model.collection}/${key}${
           !route.isStatic ? "/:id" : ""
         }", handleError((req, res) => ${model._functionName}._${key}(req, res${
-          !route.isStatic ? ", id" : ""
+          !route.isStatic ? ", req.params.id" : ""
         })));`;
       }
     });

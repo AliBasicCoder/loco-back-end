@@ -22,16 +22,15 @@ export function customRoutes(model: typeof Model) {
     if (!route.isStatic) {
       result += `if (!this.driver.isValidId(id)) {
         res.writeHead(400, { "Content-Type": "text/plain" });
-        res.end("Bad Request");
+        res.end("Invalid Document ID");
         return;
       }
-      const currentDocument = await this.driver.findById(id);
+      const currentDocument = await this.findById(id);
       if (!currentDocument) {
         res.writeHead(404, { "Content-Type": "text/plain" });
         res.end("Document Not Found");
         return;
-      }
-      currentDocument = this._new(currentDocument);`;
+      }`;
     }
     if (route.types.length > 0) {
       result += `
@@ -41,7 +40,7 @@ if (
   || Number(req.headers["content-length"]) <= 0
 ) {
   res.writeHead(400, { "Content-Type": "text/plain" });
-  res.end("Bad Request");
+  res.end("Expected JSON or FormData");
   return;
 }
 let upload = {};
@@ -124,7 +123,7 @@ if (!isJson) {
     upload = JSON.parse(str);        
   } catch (error) {
     res.writeHead(400, { "Content-Type": "text/plain" });
-    res.end("Bad Request");
+    res.end("Bad JSON");
     return;
   }
 }
@@ -135,8 +134,9 @@ if (validation_error) {
   res.end(validation_error);
   return;
 }
-const ctx = { req, res };`;
+`;
     }
+    result += `const ctx = { req, res };`;
     if (route.authorization.length > 0) {
       result += "let user;";
       route.authorization.forEach((m, i) => {
