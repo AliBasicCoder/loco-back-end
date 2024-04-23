@@ -382,18 +382,25 @@ export class Model {
     );
   }
 
-  static preCreate?: (object: any) => MaybePromise<LocoError | void>;
-  static postCreate?: (object: any) => MaybePromise<void>;
+  static preCreate?: (
+    object: any,
+    ctx: Context
+  ) => MaybePromise<LocoError | void>;
+  static postCreate?: (object: any, ctx: Context) => MaybePromise<void>;
 
   static preUpdate?: (
     newObject: any,
-    oldObject: any | null
+    oldObject: any | null,
+    ctx: Context
   ) => MaybePromise<LocoError | void>;
   static fetchDocumentForPreUpdate = true;
-  static postUpdate?: (object: any) => MaybePromise<void>;
+  static postUpdate?: (object: any, ctx: Context) => MaybePromise<void>;
 
-  static preDelete?: (ids: string[]) => MaybePromise<LocoError | void>;
-  static postDelete?: (ids: string[]) => MaybePromise<void>;
+  static preDelete?: (
+    ids: string[],
+    ctx: Context
+  ) => MaybePromise<LocoError | void>;
+  static postDelete?: (ids: string[], ctx: Context) => MaybePromise<void>;
   static preValidate?: (object: any) => MaybePromise<LocoError | void>;
   static preValidateUpdate?: (object: any) => LocoError | void;
   static preValidateCreate?: (object: any) => LocoError | void;
@@ -814,6 +821,8 @@ export function sessionAuth(
     ctx.session = session;
     if (returnUser) {
       const user = await collection.findById((session as any).user);
+      // @ts-ignore
+      ctx.session.user = user;
       // TODO should session be removed?
       if (!user) return false;
 

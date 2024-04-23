@@ -8,7 +8,9 @@ for (const id of ids) {
     res.end('"' + id + '" is not a valid id');
     return
   }
-}`;
+}
+const ctx = { req, res };
+`;
 
   if (model._rules_delete[0][1] !== "*") {
     result += "let authorized = false;";
@@ -18,7 +20,7 @@ for (const id of ids) {
       if (i !== 0) result += `if (!authorized) {`;
       result += `const authorize_result = await ${
         collection._functionName
-      }.authorize({ req, res }, ${!!fn});`;
+      }.authorize(ctx, ${!!fn});`;
       if (fn) {
         if (rule[3]) {
           result += `if (authorize_result) {
@@ -61,7 +63,7 @@ return;
 
   if (model.preDelete)
     result += `
-const [__result1_error] = getMetadata(await this.preDelete(ids));
+const [__result1_error] = getMetadata(await this.preDelete(ids, ctx));
 if (__result1_error) {
   if (typeof __result1_error.reason === "string") {
     res.writeHead(__result1_error.status, { "Content-Type": "text/plain" });
@@ -75,7 +77,7 @@ if (__result1_error) {
   result += `
 await this.driver.deleteWithIds(this.collection, ids);
 `;
-  if (model.postDelete) result += `await this.postDelete(ids);`;
+  if (model.postDelete) result += `await this.postDelete(ids, ctx);`;
   result += `
 res.writeHead(200, { "Content-Type": "text/plain" });
 res.end("OK");

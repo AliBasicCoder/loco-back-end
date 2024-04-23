@@ -151,7 +151,8 @@ if (!oldDocument) {
     res.end(validation_error);
     return;
   }
-  if (isJson) this._removeExtra(upload);`;
+  if (isJson) this._removeExtra(upload);
+  const ctx = { req, res };`;
 
   if (model._rules_update[0][1] !== "*") {
     result += "let authorized = false;";
@@ -161,7 +162,7 @@ if (!oldDocument) {
       if (i !== 0) result += `if (!authorized) {`;
       result += `const authorize_result = await ${
         collection._functionName
-      }.authorize({ req, res }, ${!!fn});`;
+      }.authorize(ctx, ${!!fn});`;
       if (fn) {
         if (rule[3]) {
           result += `if (authorize_result) {
@@ -208,7 +209,7 @@ if (authorize_result2) {
     model._noReceive.length > 0 || model.fetchDocumentForPreUpdate
       ? "oldDocument"
       : "null"
-  }));
+  }, ctx));
   if (__result5_error) {
     if (typeof __result5_error.reason === "string") {
       res.writeHead(__result5_error.status, { "Content-Type": "text/plain" });
@@ -229,7 +230,7 @@ if (authorize_result2) {
     return;
   }
   `;
-  if (model.postUpdate) result += `await this.postUpdate(result);`;
+  if (model.postUpdate) result += `await this.postUpdate(result, ctx);`;
   result += `
   this._removeNoSend(result);
   res.writeHead(200, { "Content-Type": "application/json" });

@@ -144,6 +144,7 @@ if (validation_error) {
   return;
 }
 if (isJson) this._removeExtra(upload);
+const ctx = { req, res };
 `;
 
   if (model._rules_create[0][1] !== "*") {
@@ -154,7 +155,7 @@ if (isJson) this._removeExtra(upload);
       if (i !== 0) result += `if (!authorized) {`;
       result += `const authorize_result = await ${
         collection._functionName
-      }.authorize({ req, res }, ${!!fn});`;
+      }.authorize(ctx, ${!!fn});`;
       if (fn) {
         result += `if (authorize_result) {
   const authorize_result2 = await this._rules_create[${i}][2](authorize_result);
@@ -182,7 +183,7 @@ if (!authorize_result) {
 
   if (model.preCreate)
     result += `
-const [__result4_error] = getMetadata(await this.preCreate(upload));
+const [__result4_error] = getMetadata(await this.preCreate(upload, ctx));
 if (__result4_error) {
   if (typeof __result4_error.reason === "string") {
     res.writeHead(__result4_error.status, { "Content-Type": "text/plain" });
@@ -195,7 +196,7 @@ if (__result4_error) {
 }`;
   if (model.preUpdate)
     result += `
-const [__result5_error] = getMetadata(await this.preUpdate(upload, null));
+const [__result5_error] = getMetadata(await this.preUpdate(upload, null, ctx));
 if (__result5_error) {
   if (typeof __result5_error.reason === "string") {
     res.writeHead(__result5_error.status, { "Content-Type": "text/plain" });
@@ -210,8 +211,8 @@ if (__result5_error) {
 this._toObjectId(upload);
 const result = await this.driver.create(this.collection, upload);
 `;
-  if (model.postCreate) result += `await this?.postCreate(result);\n`;
-  if (model.postUpdate) result += `await this?.postUpdate(result);\n`;
+  if (model.postCreate) result += `await this?.postCreate(result, ctx);\n`;
+  if (model.postUpdate) result += `await this?.postUpdate(result, ctx);\n`;
   result += `
 this._removeNoSend(result);
 res.writeHead(200, { "Content-Type": "application/json" });
