@@ -40,7 +40,8 @@ export function removeProperties(propertiesArray: (number | string)[][]) {
         "delete object" +
         properties.reduce(
           (pv, current) =>
-            pv + (typeof current === "number" ? `[${current}]` : `.${current}`),
+            pv +
+            (typeof current === "number" ? `?.[${current}]` : `?.${current}`),
           ""
         ) +
         ";";
@@ -51,17 +52,17 @@ export function removeProperties(propertiesArray: (number | string)[][]) {
     for (let i = 0; i < properties.length; i++) {
       const property = properties[i];
       if (i === properties.length - 1) {
-        acc += `.${property}`;
+        acc += `?.${property}`;
         result += `delete ${acc};`;
         result += "}".repeat(index);
         break;
       }
       if (typeof property === "string") {
-        acc += `.${property}`;
+        acc += `?.${property}`;
         continue;
       }
-      result += `for (let i_${index}; i_${index} < ${acc}.length; i_${index}++) {`;
-      acc += `[i_${index}]`;
+      result += `if (Array.isArray(${acc})) for (let i_${index} = 0; i_${index} < ${acc}.length; i_${index}++) {`;
+      acc += `?.[i_${index}]`;
       index++;
     }
   }
