@@ -207,6 +207,7 @@ if (__result5_error) {
   return;
 }`;
   result += `
+this._toObjectId(upload);
 const result = await this.driver.create(this.collection, upload);
 `;
   if (model.postCreate) result += `await this?.postCreate(result);\n`;

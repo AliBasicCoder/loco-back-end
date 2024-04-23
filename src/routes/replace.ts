@@ -221,6 +221,7 @@ if (authorize_result2) {
   }`;
 
   result += `
+  this.toObjectId(upload);
   const result = await this.driver.replaceById(this.collection, id, upload);
   if (result == null) {
     res.writeHead(404, { "Content-Type": "text/plain" });
