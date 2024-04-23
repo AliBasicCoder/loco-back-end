@@ -375,20 +375,21 @@ export class Model {
     );
   }
 
-  static preCreate(object: any): LocoError | void {}
-  static postCreate(object: any) {}
+  static preCreate?: (object: any) => MaybePromise<LocoError | void>;
+  static postCreate?: (object: any) => MaybePromise<void>;
 
-  static preUpdate(
-    newObject: any
-    // oldObject: any | null
-  ): LocoError | void {}
-  static postUpdate(object: any) {}
+  static preUpdate?: (
+    newObject: any,
+    oldObject: any | null
+  ) => MaybePromise<LocoError | void>;
+  static fetchDocumentForPreUpdate = true;
+  static postUpdate?: (object: any) => MaybePromise<void>;
 
-  static preDelete(ids: string[]): LocoError | void {}
-  static postDelete(ids: string[]) {}
-  static preValidate(object: any): LocoError | void {}
-  static preValidateUpdate(object: any): LocoError | void {}
-  static preValidateCreate(object: any): LocoError | void {}
+  static preDelete?: (ids: string[]) => MaybePromise<LocoError | void>;
+  static postDelete?: (ids: string[]) => MaybePromise<void>;
+  static preValidate?: (object: any) => MaybePromise<LocoError | void>;
+  static preValidateUpdate?: (object: any) => LocoError | void;
+  static preValidateCreate?: (object: any) => LocoError | void;
 }
 
 export type LocoPlugin = (models: (typeof Model)[]) => string;

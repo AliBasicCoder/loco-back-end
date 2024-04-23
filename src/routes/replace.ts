@@ -7,10 +7,11 @@ export function replace(model: typeof Model) {
     res.end("Bad Request");
     return;
   }`;
-  if (model._noReceive.length > 0) {
-    result += `const oldDocument = await this.driver.findById(this.collection, id, { project: ${JSON.stringify(
-      noReceiveToProjection(model._noReceive)
-    )} });
+  if (
+    model._noReceive.length > 0 ||
+    (!!model.preUpdate && model.fetchDocumentForPreUpdate)
+  ) {
+    result += `const oldDocument = await this.driver.findById(this.collection, id);
 if (!oldDocument) {
   res.writeHead(404, { "Content-Type": "text/plain" });
   res.end("Document Not Found");
@@ -116,7 +117,8 @@ if (!oldDocument) {
   this._removeNoReceive(upload);
   Object.assign(upload, oldDocument);`;
   }
-  result += `
+  if (model.preValidateUpdate)
+    result += `
   const [__result2_error] = getMetadata(this.preValidateUpdate(upload));
   if (__result2_error) {
     if (typeof __result2_error.reason === "string") {
@@ -127,7 +129,9 @@ if (!oldDocument) {
     res.writeHead(__result2_error.status, { "Content-Type": "application/json" });
     res.end(JSON.stringify(__result2_error.reason));
     return;
-  }
+  }`;
+  if (model.preValidate)
+    result += `
   const [__result3_error] = getMetadata(this.preValidate(upload));
   if (__result3_error) {
     if (typeof __result3_error.reason === "string") {
@@ -138,7 +142,8 @@ if (!oldDocument) {
     res.writeHead(__result3_error.status, { "Content-Type": "application/json" });
     res.end(JSON.stringify(__result3_error.reason));
     return;
-  }
+  }`;
+  result += `
   const validation_error = this.validate(upload);
   if (validation_error) {
     destroy?.(validation_error);
@@ -197,8 +202,13 @@ if (authorize_result2) {
   }`;
   }
 
-  result += `
-  const [__result5_error] = getMetadata(this.preUpdate(upload));
+  if (model.preUpdate)
+    result += `
+  const [__result5_error] = getMetadata(await this.preUpdate(upload, ${
+    model._noReceive.length > 0 || model.fetchDocumentForPreUpdate
+      ? "oldDocument"
+      : "null"
+  }));
   if (__result5_error) {
     if (typeof __result5_error.reason === "string") {
       res.writeHead(__result5_error.status, { "Content-Type": "text/plain" });
@@ -208,14 +218,18 @@ if (authorize_result2) {
     res.writeHead(__result5_error.status, { "Content-Type": "application/json" });
     res.end(JSON.stringify(__result5_error.reason));
     return;
-  }
+  }`;
+
+  result += `
   const result = await this.driver.replaceById(this.collection, id, upload);
   if (result == null) {
     res.writeHead(404, { "Content-Type": "text/plain" });
     res.end("Document Not Found");
     return;
   }
-  this.postUpdate(result);
+  `;
+  if (model.postUpdate) result += `await this.postUpdate(result);`;
+  result += `
   this._removeNoSend(result);
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(result));
