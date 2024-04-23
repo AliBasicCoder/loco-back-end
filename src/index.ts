@@ -79,9 +79,8 @@ export class Model {
 
   static _new<T extends typeof Model>(this: T, object: any) {
     const o = new this();
+    this._fromObjectId(object);
     Object.assign(o, object);
-    // TODO make function to convert all ObjectIds to strings
-    o._id = o._id.toString();
     return o as InstanceType<T>;
   }
   static _removeNoSend(object: any) {
