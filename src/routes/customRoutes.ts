@@ -63,7 +63,7 @@ if (!isJson) {
       .then(() => resolve([error, destroy]));
       return;
     }
-    bb.on("field", (name, value) => !destroyed && this._setOnUpload(upload, name, value));
+    bb.on("field", (name, value) => !destroyed && this._${key}_setOnUpload(upload, name, value));
     bb.on("file", (name, file, info) => {
       if (destroyed) return;
       if (!this.filesystem) {
@@ -82,7 +82,7 @@ if (!isJson) {
       
       const [writeStream, id] = this.filesystem.writeFileStream({ name: info.name });
       
-      this._setOnUpload(upload, name, id);
+      this._${key}_setOnUpload(upload, name, id);
       files.push(writeStream);
       const index = files.length - 1;
       let totalLength = 0;
