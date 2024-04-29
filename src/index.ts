@@ -199,22 +199,25 @@ export class Model {
     );
   }
 
-  static rule_list_filter<J extends typeof Model>(
-    fn: (req: IncomingMessage) => MaybePromise<ToFilter<noFn<InstanceType<J>>>>
+  static rule_list_filter<T extends typeof Model>(
+    this: T,
+    fn: (req: IncomingMessage) => MaybePromise<ToFilter<noFn<InstanceType<T>>>>
   ): void;
-  static rule_list_filter<J extends typeof Model>(
+  static rule_list_filter<T extends typeof Model, J extends typeof Model>(
+    this: T,
     collection: J,
-    fn: (user: InstanceType<J>) => MaybePromise<ToFilter<noFn<InstanceType<J>>>>
+    fn: (user: InstanceType<J>) => MaybePromise<ToFilter<noFn<InstanceType<T>>>>
   ): void;
-  static rule_list_filter<J extends typeof Model>(
+  static rule_list_filter<T extends typeof Model, J extends typeof Model>(
+    this: T,
     collection:
       | J
       | ((
           req: IncomingMessage
-        ) => MaybePromise<ToFilter<noFn<InstanceType<J>>>>),
+        ) => MaybePromise<ToFilter<noFn<InstanceType<T>>>>),
     fn?: (
       user: InstanceType<J>
-    ) => MaybePromise<ToFilter<noFn<InstanceType<J>>>>
+    ) => MaybePromise<ToFilter<noFn<InstanceType<T>>>>
   ) {
     if (!this._rules_list) this._rules_list = [];
 
