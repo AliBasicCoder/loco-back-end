@@ -88,7 +88,7 @@ RUNNER.fetcher = fetcher
 static collection = ${model.collection};
 ${schemaToTypescript(model._schema)}
 ${customRoutes(model)}
-static validate = ${schemaValidateGen(model)};
+static validate = ${schemaValidateGen(model, true)};
 }
 `;
   }

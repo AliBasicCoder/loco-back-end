@@ -23,10 +23,16 @@ function validateGen(
   path: string,
   path2: string,
   model: typeof Model,
-  keyIsNumber = false,
-  removeExtra = false,
-  removeFirst = true,
-  index = 0
+  /** default false */
+  keyIsNumber: boolean,
+  /** default false */
+  removeExtra: boolean,
+  /** default true */
+  removeFirst: boolean,
+  /** default 0 */
+  index: number,
+  /** default false */
+  isWeb: boolean
 ) {
   let result = "";
   if (sc.skip) return result;
@@ -64,13 +70,13 @@ if (r_${index} === false) return "'${d2}' rejected by validator";`;
   if (sc.type === "STRING") {
     if (sc.ID) {
       result += `if (${d} != null) {`;
-      if (model.driver.ObjectId) {
+      if (!isWeb && model.driver.ObjectId) {
         result += `
       if (!(${d} instanceof this.driver.ObjectId || (typeof ${d} === "string" && this.driver.isValidId(${d}))))
         return "'${d2}' is NOT a valid ID";
       if (typeof ${d} === "string" && toObjectId) ${d} = new this.driver.ObjectId(${d});
       if (${d} instanceof this.driver.ObjectId && !toObjectId) ${d} = ${d}.toString();`;
-      } else {
+      } else if (!isWeb) {
         result += `if (typeof ${d} !== "string" || !this.driver.isValidId(${d}))
       return "'${d2}' is NOT a valid ID";`;
       }
@@ -126,7 +132,7 @@ if (r_${index} === false) return "'${d2}' rejected by validator";`;
     if (sc.default) result += `if (${d} == null) ${d} = ${sc.default};`;
     if (sc.nullable) result += `if (${d} != null) {`;
     result += `if (typeof ${d} === "string") {`;
-    if (!sc.skipIdValidation)
+    if (isWeb || !sc.skipIdValidation)
       result += `if (!this.filesystem.isValidId(${d})) return "'${d2}' is not a valid file id";`;
     result += ` } else {`;
     if (typeof process === "undefined") {
@@ -146,12 +152,12 @@ return "'${d2}' is wrong mime type";`;
   }
   if (sc.type === "REF") {
     if (sc.nullable) result += `if (${d} != null) {`;
-    if (model.driver.ObjectId) {
+    if (!isWeb && model.driver.ObjectId) {
       result += `if (!(${d} instanceof this.driver.ObjectId || (typeof ${d} === "string" && this.driver.isValidId(${d}))))
 return "'${d2}' is not a valid reference";
 if (toObjectId && typeof ${d} === "string") ${d} = new this.driver.ObjectId(${d});
 if (!toObjectId && typeof ${d} !== "string") ${d} = ${d}.toString();`;
-    } else {
+    } else if (!isWeb) {
       result += `if (typeof ${d} !== "string" || !this.driver.isValidId(${d}))
 return "'${d2}' is not a valid reference";`;
     }
@@ -176,7 +182,8 @@ else if (!Array.isArray(${d})) ${d} = [${d}];`;
       true,
       removeExtra,
       removeFirst,
-      index
+      index,
+      isWeb
     );
     result += "}";
   }
@@ -194,7 +201,8 @@ if (${d}.length !== ${sc.sub_types.length}) return "'${d}' doesn't have ${sc.sub
         false,
         removeExtra,
         removeFirst,
-        index
+        index,
+        isWeb
       );
     }
   }
@@ -211,7 +219,9 @@ if (${d}.length !== ${sc.sub_types.length}) return "'${d}' doesn't have ${sc.sub
         model,
         false,
         removeExtra,
-        removeFirst
+        removeFirst,
+        0,
+        isWeb
       );
     }
 
@@ -220,11 +230,23 @@ if (${d}.length !== ${sc.sub_types.length}) return "'${d}' doesn't have ${sc.sub
   return result;
 }
 
-export function schemaValidateGen(model: typeof Model) {
+export function schemaValidateGen(model: typeof Model, isWeb = false) {
   const schema = model._schema;
   let result = "function (object, toObjectId) {";
   for (const [key, sc] of Object.entries(schema)) {
-    result += validateGen(sc, key, key, "object", "this._schema", model);
+    result += validateGen(
+      sc,
+      key,
+      key,
+      "object",
+      "this._schema",
+      model,
+      false,
+      false,
+      true,
+      0,
+      isWeb
+    );
   }
   return result + "}";
 }
@@ -243,7 +265,12 @@ export function customRouteValidateGen(
       key,
       "object",
       `this._customRoutes[${key}]`,
-      model
+      model,
+      false,
+      false,
+      true,
+      0,
+      true
     );
   }
   return result + "}";
