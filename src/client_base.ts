@@ -35,7 +35,7 @@ export class Model {
       body: JSON.stringify({ _id: id }),
       headers: { "Content-Type": "application/json" },
     });
-    if (!req.ok) throw new Error();
+    if (!req.ok) throw new Error(`${req.status}: ${req.statusText}`);
     const result = await req.json();
     return this._new(Array.isArray(result) ? result[0] : result);
   }
@@ -50,7 +50,7 @@ export class Model {
       body: JSON.stringify({ _id: { $in: ids } }),
       headers: { "Content-Type": "application/json" },
     });
-    if (!req.ok) throw new Error();
+    if (!req.ok) throw new Error(`${req.status}: ${req.statusText}`);
     const result = (await req.json()) as any[];
     return result.map((o) => this._new(o));
   }
@@ -65,7 +65,7 @@ export class Model {
       body: JSON.stringify(filter),
       headers: { "Content-Type": "application/json" },
     });
-    if (!req.ok) throw new Error();
+    if (!req.ok) throw new Error(`${req.status}: ${req.statusText}`);
     const result = await req.json();
     return this._new(Array.isArray(result) ? result[0] : result);
   }
@@ -80,7 +80,7 @@ export class Model {
       body: JSON.stringify(filter),
       headers: { "Content-Type": "application/json" },
     });
-    if (!req.ok) throw new Error();
+    if (!req.ok) throw new Error(`${req.status}: ${req.statusText}`);
     const result = (await req.json()) as any[];
     return result.map((o) => this._new(o));
   }
@@ -89,7 +89,7 @@ export class Model {
     const req = await RUNNER.fetcher(`/${this.collection}/delete/${id}`, {
       method: "DELETE",
     });
-    if (!req.ok) throw new Error();
+    if (!req.ok) throw new Error(`${req.status}: ${req.statusText}`);
   }
 
   static async deleteByIds(ids: string[]) {
@@ -97,7 +97,7 @@ export class Model {
       `/${this.collection}/delete/${ids.join(",")}`,
       { method: "DELETE" }
     );
-    if (!req.ok) throw new Error();
+    if (!req.ok) throw new Error(`${req.status}: ${req.statusText}`);
   }
 
   static async create<T extends typeof Model, K extends string = "_id">(
@@ -118,7 +118,7 @@ export class Model {
             body: JSON.stringify(object),
           }
     );
-    if (!req.ok) throw new Error();
+    if (!req.ok) throw new Error(`${req.status}: ${req.statusText}`);
     const result = await req.json();
     return this._new(result);
   }
@@ -142,7 +142,7 @@ export class Model {
             body: JSON.stringify(replacement),
           }
     );
-    if (!req.ok) throw new Error();
+    if (!req.ok) throw new Error(`${req.status}: ${req.statusText}`);
     const result = await req.json();
     return this._new(result);
   }
