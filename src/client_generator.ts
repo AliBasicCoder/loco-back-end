@@ -85,6 +85,7 @@ RUNNER.fetcher = fetcher
 `;
   for (const model of models) {
     result += `export class ${model._functionName} extends Model {
+static collection = ${model.collection};
 ${schemaToTypescript(model._schema)}
 ${customRoutes(model)}
 static validate = ${schemaValidateGen(model)};
