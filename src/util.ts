@@ -1,4 +1,4 @@
-import { ArrayType, Model, ObjectType, TupleType } from ".";
+import { ArrayType, Model, ObjectType, TupleType, object } from ".";
 import { AnyType, BasicType, SchemaObject, isSchemaObject } from "./types";
 
 export function trimArray<T>(array: T[], item: T) {
@@ -305,6 +305,25 @@ export function genAssignNoReceive(model: typeof Model) {
   for (const [key, value] of Object.entries(model._schema)) {
     if (!value.noReceive) continue;
     result += `target.${key} = object.${key};\n`;
+  }
+  return result + "}";
+}
+
+export function filterToObjectId(model: typeof Model) {
+  // TODO make this actually work
+  let result = "function (object) {";
+  for (const [key, value] of Object.entries(model._schema)) {
+    if (!(value.type === "REF" || (value.type === "STRING" && value.ID)))
+      continue;
+    result += `if (typeof object.${key} === "string") {
+  object.${key} = new this.driver.ObjectId(object.${key});
+} else if (typeof object.${key} === "object" && object.${key}) {
+  if (object.${key}.$eq) object.${key}.$eq = new this.driver.ObjectId(object.${key}.$eq);
+  if (object.${key}.$neq) object.${key}.$neq = new this.driver.ObjectId(object.${key}.$neq);
+  if (object.${key}.$in) object.${key}.$in = object.${key}.$in.map(_e => new this.driver.ObjectId(_e));
+  if (object.${key}.$nin) object.${key}.$nin = object.${key}.$nin.map(_e => new this.driver.ObjectId(_e));
+}
+`;
   }
   return result + "}";
 }

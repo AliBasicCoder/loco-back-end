@@ -42,6 +42,7 @@ import {
   removeExtra,
   genToObjectId,
   genAssignNoReceive,
+  filterToObjectId,
 } from "./util";
 import { list } from "./routes/list";
 import { create } from "./routes/create";
@@ -118,6 +119,9 @@ export class Model {
     throw new Error("Method should be overwritten");
   }
   static _assignNoReceive(target: any, object: any) {
+    throw new Error("Method should be overwritten");
+  }
+  static _filterToObjectId(object: any) {
     throw new Error("Method should be overwritten");
   }
 
@@ -544,6 +548,9 @@ export async function init(options: InitOptions) {
       result += `${model._functionName}._fromObjectId = function () {};`;
     }
     result += `${model._functionName}._assignNoReceive = ${genAssignNoReceive(
+      model
+    )};`;
+    result += `${model._functionName}._filterToObjectId = ${filterToObjectId(
       model
     )};`;
     if (!model._customRoutes) model._customRoutes = {};

@@ -37,6 +37,7 @@ export class Model {
     });
     if (!req.ok) throw new Error(`${req.status}: ${req.statusText}`);
     const result = await req.json();
+    if (!result || (Array.isArray(result) && result.length === 0)) return null;
     return this._new(Array.isArray(result) ? result[0] : result);
   }
 
@@ -67,6 +68,7 @@ export class Model {
     });
     if (!req.ok) throw new Error(`${req.status}: ${req.statusText}`);
     const result = await req.json();
+    if (!result || (Array.isArray(result) && result.length === 0)) return null;
     return this._new(Array.isArray(result) ? result[0] : result);
   }
 
