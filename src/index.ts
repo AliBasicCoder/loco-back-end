@@ -841,6 +841,8 @@ interface EPSoptions {
   passwordProperty: string;
   extraSessionData: (req: IncomingMessage, user: any) => any;
   cookieOptions: CookieSerializeOptions;
+  maxAge?: number;
+  antiCSRF: boolean;
 }
 
 const defaultEPSoptions: EPSoptions = {
@@ -852,6 +854,9 @@ const defaultEPSoptions: EPSoptions = {
     secure: true,
     sameSite: "strict",
   },
+  // 2 months
+  maxAge: 60 * 60 * 24 * 30 * 2,
+  antiCSRF: true,
 };
 
 export function emailPasswordSessionLogin(
@@ -890,12 +895,17 @@ export function emailPasswordSessionLogin(
           ctx.req.socket.remoteAddress) as string,
         createAt: new Date(),
         updateAt: new Date(),
+        expires: op.maxAge ? new Date(Date.now() + op.maxAge) : undefined,
+        anti_csrf: uuid_v4(),
         ...op.extraSessionData(ctx.req, user),
       }
     );
     ctx.res.setHeader(
       "cookie",
-      cookie.serialize("SessionID", session.id, op.cookieOptions)
+      cookie.serialize("SessionID", session.id, {
+        ...op.cookieOptions,
+        maxAge: op.maxAge,
+      })
     );
     ctx.session = session;
 
