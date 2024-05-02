@@ -56,7 +56,7 @@ function customRoutes(model: typeof Model) {
     else result += `) `;
     result += `{
     const __object = { ${route.argumentsName.join(",")} };
-    this.${key}_validate(__object);
+    ${model._functionName}.${key}_validate(__object);
     const __req = await RUNNER.fetcher("/${model.collection}/${key}"${
       route.isStatic ? "" : '+ "/" + this._id'
     }, {
