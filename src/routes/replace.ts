@@ -115,7 +115,7 @@ if (!oldDocument) {
   if (model._noReceive.length > 0) {
     result += `
   this._removeNoReceive(upload);
-  Object.assign(upload, oldDocument);`;
+  this._assignNoReceive(upload, oldDocument);`;
   }
   if (model.preValidateUpdate)
     result += `
@@ -222,7 +222,7 @@ if (authorize_result2) {
   }`;
 
   result += `
-  this.toObjectId(upload);
+  this._toObjectId(upload);
   const result = await this.driver.replaceById(this.collection, id, upload);
   if (result == null) {
     res.writeHead(404, { "Content-Type": "text/plain" });

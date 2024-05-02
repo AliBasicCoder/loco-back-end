@@ -299,6 +299,16 @@ export function genToObjectId(model: typeof Model, to = true) {
   return result + "}";
 }
 
+export function genAssignNoReceive(model: typeof Model) {
+  // TODO make this actually work
+  let result = "function (target, object) {";
+  for (const [key, value] of Object.entries(model._schema)) {
+    if (!value.noReceive) continue;
+    result += `target.${key} = object.${key};\n`;
+  }
+  return result + "}";
+}
+
 // from stack overflow
 export function $args(func: Function) {
   return (func + "")

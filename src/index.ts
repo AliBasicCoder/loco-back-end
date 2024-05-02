@@ -41,6 +41,7 @@ import {
   matchMime,
   removeExtra,
   genToObjectId,
+  genAssignNoReceive,
 } from "./util";
 import { list } from "./routes/list";
 import { create } from "./routes/create";
@@ -114,6 +115,9 @@ export class Model {
     throw new Error("Method should be overwritten");
   }
   static _fromObjectId(object: any) {
+    throw new Error("Method should be overwritten");
+  }
+  static _assignNoReceive(target: any, object: any) {
     throw new Error("Method should be overwritten");
   }
 
@@ -535,8 +539,13 @@ export async function init(options: InitOptions) {
         model,
         false
       )};`;
+    } else {
+      result += `${model._functionName}._toObjectId = function () {};`;
+      result += `${model._functionName}._fromObjectId = function () {};`;
     }
-
+    result += `${model._functionName}._assignNoReceive = ${genAssignNoReceive(
+      model
+    )};`;
     if (!model._customRoutes) model._customRoutes = {};
 
     result += customRoutes(model);
