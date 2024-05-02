@@ -25,9 +25,13 @@ export class Model {
     toObjectId = false
   ): string | void {}
 
-  static async findById<T extends typeof Model>(this: T, id: string) {
+  static async findById<T extends typeof Model>(
+    this: T,
+    id: string,
+    useGET = false
+  ) {
     const req = await RUNNER.fetcher(`/${this.collection}/list?limit=1`, {
-      method: "GET",
+      method: !useGET ? "SEARCH" : "GET",
       body: JSON.stringify({ _id: id }),
       headers: { "Content-Type": "application/json" },
     });
@@ -36,9 +40,13 @@ export class Model {
     return this._new(Array.isArray(result) ? result[0] : result);
   }
 
-  static async findByIds<T extends typeof Model>(this: T, ids: string[]) {
+  static async findByIds<T extends typeof Model>(
+    this: T,
+    ids: string[],
+    useGET = false
+  ) {
     const req = await RUNNER.fetcher(`/${this.collection}/list`, {
-      method: "GET",
+      method: !useGET ? "SEARCH" : "GET",
       body: JSON.stringify({ _id: { $in: ids } }),
       headers: { "Content-Type": "application/json" },
     });
@@ -49,10 +57,11 @@ export class Model {
 
   static async findOne<T extends typeof Model>(
     this: T,
-    filter: ToFilter<noFn<T>>
+    filter: ToFilter<noFn<T>>,
+    useGET = false
   ) {
     const req = await RUNNER.fetcher(`/${this.collection}/list?limit=1`, {
-      method: "GET",
+      method: !useGET ? "SEARCH" : "GET",
       body: JSON.stringify(filter),
       headers: { "Content-Type": "application/json" },
     });
@@ -63,10 +72,11 @@ export class Model {
 
   static async find<T extends typeof Model>(
     this: T,
-    filter: ToFilter<noFn<T>>
+    filter: ToFilter<noFn<T>>,
+    useGET = false
   ) {
     const req = await RUNNER.fetcher(`/${this.collection}/list`, {
-      method: "GET",
+      method: !useGET ? "SEARCH" : "GET",
       body: JSON.stringify(filter),
       headers: { "Content-Type": "application/json" },
     });

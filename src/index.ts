@@ -649,7 +649,7 @@ export function httpRouter(
     models.forEach((model) => {
       if (model._rules_list.length > 0)
         inside += `
-  if (pathname === "/${model.collection}/list" && req.method === "GET") {
+  if (pathname === "/${model.collection}/list" && req.method === "GET" || req.method === "SEARCH") {
     return ${model._functionName}._list(req, res);  
   }`;
       if (model._rules_create.length > 0)
@@ -721,8 +721,10 @@ const router = express.Router();
 `;
 
     models.forEach((model) => {
-      if (model._rules_list.length > 0)
+      if (model._rules_list.length > 0) {
         result += `router.get("/${model.collection}/list", handleError((req, res) => ${model._functionName}._list(req, res)));`;
+        result += `router.search("/${model.collection}/list", handleError((req, res) => ${model._functionName}._list(req, res)));`;
+      }
       if (model._rules_create.length > 0)
         result += `router.post("/${model.collection}/create", handleError((req, res) => ${model._functionName}._create(req, res)));`;
       if (model._rules_delete.length > 0)
