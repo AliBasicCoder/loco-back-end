@@ -900,9 +900,17 @@ export function emailPasswordSessionLogin(
         ...op.extraSessionData(ctx.req, user),
       }
     );
+
     ctx.res.setHeader(
-      "cookie",
+      "Set-Cookie",
       cookie.serialize("SessionID", session.id, {
+        ...op.cookieOptions,
+        maxAge: op.maxAge,
+      })
+    );
+    ctx.res.appendHeader(
+      "Set-Cookie",
+      cookie.serialize("UserType", collection.collection, {
         ...op.cookieOptions,
         maxAge: op.maxAge,
       })
