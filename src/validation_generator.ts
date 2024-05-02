@@ -125,9 +125,10 @@ if (r_${index} === false) return "'${d2}' rejected by validator";`;
   if (sc.type === "FILE") {
     if (sc.default) result += `if (${d} == null) ${d} = ${sc.default};`;
     if (sc.nullable) result += `if (${d} != null) {`;
-    result += `if (typeof ${d} === "string") {
-      if (!this.filesystem.isValidId(${d})) return "'${d2}' is not a valid file id";
-    } else {`;
+    result += `if (typeof ${d} === "string") {`;
+    if (!sc.skipIdValidation)
+      result += `if (!this.filesystem.isValidId(${d})) return "'${d2}' is not a valid file id";`;
+    result += ` } else {`;
     if (typeof process === "undefined") {
       result += `if (!(${d} instanceof Blob)) return "'${d2}' is not a Blob nor a file id";`;
       if (sc.mimetype)

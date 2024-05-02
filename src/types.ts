@@ -71,6 +71,7 @@ export type FileTypeOptions = GlobalOptions & {
   mimetype?: string | string[];
   default?: string;
   nullable?: boolean;
+  skipIdValidation?: boolean;
 };
 
 export type FileType = FileTypeOptions & { type: "FILE" };
