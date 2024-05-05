@@ -902,7 +902,7 @@ export function emailPasswordSessionLogin(
       !user ||
       !(await bcrypt.compare(password, (user as any)[op.passwordProperty]))
     ) {
-      return error(400, "incorrect email or password");
+      return error(401, "incorrect email or password");
     }
     const session = await sessionCollection.driver.create(
       sessionCollection.collection,
